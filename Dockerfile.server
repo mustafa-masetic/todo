@@ -7,11 +7,12 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY server/package.json ./server/package.json
 
 RUN apt-get update && apt-get install -y --no-install-recommends python3 make g++ && rm -rf /var/lib/apt/lists/*
-RUN pnpm install --no-frozen-lockfile --filter ./server...
+
+RUN pnpm install --no-frozen-lockfile --filter ./server... --allow-build=better-sqlite3
+RUN pnpm --filter ./server rebuild better-sqlite3
 
 COPY server ./server
 RUN pnpm --filter ./server build
-RUN pnpm --filter ./server rebuild better-sqlite3
 
 WORKDIR /app/server
 ENV NODE_ENV=production
