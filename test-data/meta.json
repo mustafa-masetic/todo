@@ -1,0 +1,14 @@
+{
+  "generatedAt": "2026-03-07T11:21:20.227Z",
+  "counts": {
+    "users": 10,
+    "spaces": 20,
+    "tasks": 130
+  },
+  "cleanedDatabaseFiles": [],
+  "notes": [
+    "Passwords are plain-text fixture values intended only for local test seeding.",
+    "Use email fields as stable keys when importing via API.",
+    "Space membership is included to support assignment validation."
+  ]
+}

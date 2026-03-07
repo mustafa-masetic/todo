@@ -1,0 +1,518 @@
+[
+  {
+    "id": 1,
+    "name": "Apollo Launch Ops",
+    "description": "Coordinate launch milestones, risks, and rollout readiness across product teams.",
+    "ownerUserId": 1,
+    "ownerEmail": "mustafa.masetic@example.com",
+    "members": [
+      {
+        "userId": 1,
+        "role": "owner"
+      },
+      {
+        "userId": 3,
+        "role": "member"
+      },
+      {
+        "userId": 5,
+        "role": "member"
+      }
+    ],
+    "createdAt": "2026-02-01T00:00:00.000Z"
+  },
+  {
+    "id": 2,
+    "name": "Beacon Design Studio",
+    "description": "Own visual design systems, experiments, and product UX polish initiatives.",
+    "ownerUserId": 2,
+    "ownerEmail": "lena.kovac@example.com",
+    "members": [
+      {
+        "userId": 2,
+        "role": "owner"
+      },
+      {
+        "userId": 4,
+        "role": "member"
+      },
+      {
+        "userId": 6,
+        "role": "member"
+      },
+      {
+        "userId": 8,
+        "role": "member"
+      }
+    ],
+    "createdAt": "2026-02-02T00:00:00.000Z"
+  },
+  {
+    "id": 3,
+    "name": "Catalyst Growth Lab",
+    "description": "Drive growth loops, campaign experiments, and activation performance goals.",
+    "ownerUserId": 3,
+    "ownerEmail": "marcus.reed@example.com",
+    "members": [
+      {
+        "userId": 3,
+        "role": "owner"
+      },
+      {
+        "userId": 5,
+        "role": "member"
+      },
+      {
+        "userId": 7,
+        "role": "member"
+      },
+      {
+        "userId": 9,
+        "role": "member"
+      },
+      {
+        "userId": 1,
+        "role": "member"
+      }
+    ],
+    "createdAt": "2026-02-03T00:00:00.000Z"
+  },
+  {
+    "id": 4,
+    "name": "Delta Platform Core",
+    "description": "Maintain shared platform services, APIs, and reliability standards.",
+    "ownerUserId": 4,
+    "ownerEmail": "priya.patel@example.com",
+    "members": [
+      {
+        "userId": 4,
+        "role": "owner"
+      },
+      {
+        "userId": 6,
+        "role": "member"
+      },
+      {
+        "userId": 8,
+        "role": "member"
+      }
+    ],
+    "createdAt": "2026-02-04T00:00:00.000Z"
+  },
+  {
+    "id": 5,
+    "name": "Echo Customer Success",
+    "description": "Manage onboarding quality, churn interventions, and customer health playbooks.",
+    "ownerUserId": 5,
+    "ownerEmail": "noah.nolan@example.com",
+    "members": [
+      {
+        "userId": 5,
+        "role": "owner"
+      },
+      {
+        "userId": 7,
+        "role": "member"
+      },
+      {
+        "userId": 9,
+        "role": "member"
+      },
+      {
+        "userId": 1,
+        "role": "member"
+      }
+    ],
+    "createdAt": "2026-02-05T00:00:00.000Z"
+  },
+  {
+    "id": 6,
+    "name": "Flux Marketing Guild",
+    "description": "Plan channel strategy, launch assets, and weekly performance analysis.",
+    "ownerUserId": 6,
+    "ownerEmail": "iris.berg@example.com",
+    "members": [
+      {
+        "userId": 6,
+        "role": "owner"
+      },
+      {
+        "userId": 8,
+        "role": "member"
+      },
+      {
+        "userId": 10,
+        "role": "member"
+      },
+      {
+        "userId": 2,
+        "role": "member"
+      },
+      {
+        "userId": 4,
+        "role": "member"
+      }
+    ],
+    "createdAt": "2026-02-06T00:00:00.000Z"
+  },
+  {
+    "id": 7,
+    "name": "Glacier Data Engineering",
+    "description": "Build ETL flows, warehouse models, and reporting reliability foundations.",
+    "ownerUserId": 7,
+    "ownerEmail": "mateo.alvarez@example.com",
+    "members": [
+      {
+        "userId": 7,
+        "role": "owner"
+      },
+      {
+        "userId": 9,
+        "role": "member"
+      },
+      {
+        "userId": 1,
+        "role": "member"
+      }
+    ],
+    "createdAt": "2026-02-07T00:00:00.000Z"
+  },
+  {
+    "id": 8,
+    "name": "Harbor Security Response",
+    "description": "Triage incidents, harden posture, and improve response playbooks.",
+    "ownerUserId": 8,
+    "ownerEmail": "amina.hassan@example.com",
+    "members": [
+      {
+        "userId": 8,
+        "role": "owner"
+      },
+      {
+        "userId": 10,
+        "role": "member"
+      },
+      {
+        "userId": 2,
+        "role": "member"
+      },
+      {
+        "userId": 4,
+        "role": "member"
+      }
+    ],
+    "createdAt": "2026-02-08T00:00:00.000Z"
+  },
+  {
+    "id": 9,
+    "name": "Ion Mobile Experience",
+    "description": "Ship mobile feature sets and improve cross-platform interaction quality.",
+    "ownerUserId": 9,
+    "ownerEmail": "jonah.frost@example.com",
+    "members": [
+      {
+        "userId": 9,
+        "role": "owner"
+      },
+      {
+        "userId": 1,
+        "role": "member"
+      },
+      {
+        "userId": 3,
+        "role": "member"
+      },
+      {
+        "userId": 5,
+        "role": "member"
+      },
+      {
+        "userId": 7,
+        "role": "member"
+      }
+    ],
+    "createdAt": "2026-02-09T00:00:00.000Z"
+  },
+  {
+    "id": 10,
+    "name": "Juno Sales Enablement",
+    "description": "Create collateral, playbooks, and enablement sessions for account teams.",
+    "ownerUserId": 10,
+    "ownerEmail": "sofia.silva@example.com",
+    "members": [
+      {
+        "userId": 10,
+        "role": "owner"
+      },
+      {
+        "userId": 2,
+        "role": "member"
+      },
+      {
+        "userId": 4,
+        "role": "member"
+      }
+    ],
+    "createdAt": "2026-02-10T00:00:00.000Z"
+  },
+  {
+    "id": 11,
+    "name": "Kepler Analytics Board",
+    "description": "Define KPI governance, attribution rules, and leadership dashboards.",
+    "ownerUserId": 1,
+    "ownerEmail": "mustafa.masetic@example.com",
+    "members": [
+      {
+        "userId": 1,
+        "role": "owner"
+      },
+      {
+        "userId": 3,
+        "role": "member"
+      },
+      {
+        "userId": 5,
+        "role": "member"
+      },
+      {
+        "userId": 7,
+        "role": "member"
+      }
+    ],
+    "createdAt": "2026-02-11T00:00:00.000Z"
+  },
+  {
+    "id": 12,
+    "name": "Lumen Content Pipeline",
+    "description": "Publish educational content and automate internal content operations.",
+    "ownerUserId": 2,
+    "ownerEmail": "lena.kovac@example.com",
+    "members": [
+      {
+        "userId": 2,
+        "role": "owner"
+      },
+      {
+        "userId": 4,
+        "role": "member"
+      },
+      {
+        "userId": 6,
+        "role": "member"
+      },
+      {
+        "userId": 8,
+        "role": "member"
+      },
+      {
+        "userId": 10,
+        "role": "member"
+      }
+    ],
+    "createdAt": "2026-02-12T00:00:00.000Z"
+  },
+  {
+    "id": 13,
+    "name": "Meridian Partner Network",
+    "description": "Expand partner onboarding, integrations, and co-marketing workflows.",
+    "ownerUserId": 3,
+    "ownerEmail": "marcus.reed@example.com",
+    "members": [
+      {
+        "userId": 3,
+        "role": "owner"
+      },
+      {
+        "userId": 5,
+        "role": "member"
+      },
+      {
+        "userId": 7,
+        "role": "member"
+      }
+    ],
+    "createdAt": "2026-02-13T00:00:00.000Z"
+  },
+  {
+    "id": 14,
+    "name": "Nimbus QA Collective",
+    "description": "Own quality strategy, regression safety nets, and release confidence.",
+    "ownerUserId": 4,
+    "ownerEmail": "priya.patel@example.com",
+    "members": [
+      {
+        "userId": 4,
+        "role": "owner"
+      },
+      {
+        "userId": 6,
+        "role": "member"
+      },
+      {
+        "userId": 8,
+        "role": "member"
+      },
+      {
+        "userId": 10,
+        "role": "member"
+      }
+    ],
+    "createdAt": "2026-02-14T00:00:00.000Z"
+  },
+  {
+    "id": 15,
+    "name": "Orion Billing Systems",
+    "description": "Run invoicing, collections workflows, and payment reliability projects.",
+    "ownerUserId": 5,
+    "ownerEmail": "noah.nolan@example.com",
+    "members": [
+      {
+        "userId": 5,
+        "role": "owner"
+      },
+      {
+        "userId": 7,
+        "role": "member"
+      },
+      {
+        "userId": 9,
+        "role": "member"
+      },
+      {
+        "userId": 1,
+        "role": "member"
+      },
+      {
+        "userId": 3,
+        "role": "member"
+      }
+    ],
+    "createdAt": "2026-02-15T00:00:00.000Z"
+  },
+  {
+    "id": 16,
+    "name": "Pulse People Operations",
+    "description": "Improve hiring process operations, onboarding, and retention programs.",
+    "ownerUserId": 6,
+    "ownerEmail": "iris.berg@example.com",
+    "members": [
+      {
+        "userId": 6,
+        "role": "owner"
+      },
+      {
+        "userId": 8,
+        "role": "member"
+      },
+      {
+        "userId": 10,
+        "role": "member"
+      }
+    ],
+    "createdAt": "2026-02-16T00:00:00.000Z"
+  },
+  {
+    "id": 17,
+    "name": "Quantum Research Pod",
+    "description": "Explore prototypes, validate product hypotheses, and technical feasibility.",
+    "ownerUserId": 7,
+    "ownerEmail": "mateo.alvarez@example.com",
+    "members": [
+      {
+        "userId": 7,
+        "role": "owner"
+      },
+      {
+        "userId": 9,
+        "role": "member"
+      },
+      {
+        "userId": 1,
+        "role": "member"
+      },
+      {
+        "userId": 3,
+        "role": "member"
+      }
+    ],
+    "createdAt": "2026-02-17T00:00:00.000Z"
+  },
+  {
+    "id": 18,
+    "name": "Rift DevEx Squad",
+    "description": "Upgrade internal developer workflows, tooling, and pipeline speed.",
+    "ownerUserId": 8,
+    "ownerEmail": "amina.hassan@example.com",
+    "members": [
+      {
+        "userId": 8,
+        "role": "owner"
+      },
+      {
+        "userId": 10,
+        "role": "member"
+      },
+      {
+        "userId": 2,
+        "role": "member"
+      },
+      {
+        "userId": 4,
+        "role": "member"
+      },
+      {
+        "userId": 6,
+        "role": "member"
+      }
+    ],
+    "createdAt": "2026-02-18T00:00:00.000Z"
+  },
+  {
+    "id": 19,
+    "name": "Summit Finance Control",
+    "description": "Track budgets, approvals, and monthly close controls.",
+    "ownerUserId": 9,
+    "ownerEmail": "jonah.frost@example.com",
+    "members": [
+      {
+        "userId": 9,
+        "role": "owner"
+      },
+      {
+        "userId": 1,
+        "role": "member"
+      },
+      {
+        "userId": 3,
+        "role": "member"
+      }
+    ],
+    "createdAt": "2026-02-19T00:00:00.000Z"
+  },
+  {
+    "id": 20,
+    "name": "Tango Release Train",
+    "description": "Coordinate release sequencing, communication, and rollout checklists.",
+    "ownerUserId": 10,
+    "ownerEmail": "sofia.silva@example.com",
+    "members": [
+      {
+        "userId": 10,
+        "role": "owner"
+      },
+      {
+        "userId": 2,
+        "role": "member"
+      },
+      {
+        "userId": 4,
+        "role": "member"
+      },
+      {
+        "userId": 6,
+        "role": "member"
+      }
+    ],
+    "createdAt": "2026-02-20T00:00:00.000Z"
+  }
+]

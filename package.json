@@ -1,0 +1,20 @@
+{
+  "name": "todo-app",
+  "private": true,
+  "version": "1.0.0",
+  "packageManager": "pnpm@10.6.2",
+  "scripts": {
+    "dev": "concurrently -n client,server -c cyan,green \"pnpm --filter ./client dev\" \"pnpm --filter ./server dev\"",
+    "build": "pnpm --filter ./client build && pnpm --filter ./server build",
+    "start": "pnpm --filter ./server start",
+    "create:data": "node ./scripts/create-data.mjs",
+    "data:create": "pnpm run create:data",
+    "create-data": "pnpm run create:data",
+    "seed:data": "node ./scripts/seed-via-api.mjs",
+    "data:seed": "pnpm run seed:data",
+    "data:reset-seed": "node ./scripts/reset-and-seed.mjs"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

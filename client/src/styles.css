@@ -1,0 +1,357 @@
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap");
+
+:root {
+  font-family: "Space Grotesk", ui-sans-serif, system-ui;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--app-text);
+  background: var(--app-bg);
+}
+
+[data-mantine-color-scheme="light"] {
+  --app-bg:
+    radial-gradient(circle at 12% 0%, rgba(34, 211, 238, 0.16), transparent 42%),
+    radial-gradient(circle at 100% 100%, rgba(245, 158, 11, 0.12), transparent 36%),
+    #eef3f8;
+  --app-surface: #ffffff;
+  --app-border: rgba(15, 23, 42, 0.24);
+  --app-title: #0f172a;
+  --app-subtitle: #22324a;
+  --app-text: #0b1220;
+  --badge-bg: #0b6b86;
+  --badge-fg: #f8fdff;
+  --toggle-bg: #dff2fa;
+  --toggle-fg: #0b4f65;
+  --button-bg: #0b6b86;
+  --button-bg-hover: #09546b;
+  --button-fg: #f8fdff;
+}
+
+[data-mantine-color-scheme="light"] .surface-card {
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
+[data-mantine-color-scheme="light"] .top-nav-search-trigger {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.2);
+  color: var(--app-subtitle);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+[data-mantine-color-scheme="light"] .todo-input input {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.22);
+}
+
+[data-mantine-color-scheme="dark"] {
+  --app-bg:
+    radial-gradient(circle at 0% 0%, rgba(34, 211, 238, 0.18), transparent 35%),
+    radial-gradient(circle at 100% 100%, rgba(251, 191, 36, 0.14), transparent 32%),
+    #020617;
+  --app-surface: rgba(15, 23, 42, 0.84);
+  --app-border: rgba(148, 163, 184, 0.32);
+  --app-title: #f8fafc;
+  --app-subtitle: #cbd5e1;
+  --app-text: #e2e8f0;
+  --badge-bg: #0891b2;
+  --badge-fg: #ecfeff;
+  --toggle-bg: #0f172a;
+  --toggle-fg: #bae6fd;
+  --button-bg: #0891b2;
+  --button-bg-hover: #0e7490;
+  --button-fg: #ecfeff;
+}
+
+.app-shell {
+  min-height: 100vh;
+}
+
+.app-header {
+  background: var(--app-surface);
+  border-bottom: 1px solid var(--app-border);
+  backdrop-filter: blur(6px);
+}
+
+.page-container {
+  min-height: calc(100vh - 2rem);
+  display: flex;
+  flex-direction: column;
+}
+
+.page-content {
+  flex: 1;
+}
+
+.surface-card {
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  backdrop-filter: blur(4px);
+}
+
+.app-footer {
+  margin-top: auto;
+  padding: 28px 8px 4px;
+}
+
+.nav-links {
+  overflow-x: auto;
+}
+
+.top-nav-button {
+  color: var(--app-subtitle);
+  border: 1px solid transparent;
+  background: transparent;
+  transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease;
+}
+
+.top-nav-button:hover {
+  color: var(--app-text);
+  border-color: color-mix(in srgb, var(--app-border) 48%, transparent);
+  background: color-mix(in srgb, var(--app-surface) 88%, #22d3ee 12%);
+}
+
+.top-nav-button.is-active {
+  color: var(--app-text);
+  border-color: color-mix(in srgb, var(--app-border) 35%, #22d3ee 65%);
+  background: color-mix(in srgb, var(--app-surface) 82%, #22d3ee 18%);
+}
+
+.top-nav-search-trigger {
+  min-width: 360px;
+  height: 50px;
+  padding: 0 10px;
+  border-radius: 14px;
+  justify-content: flex-start;
+  border: 1px solid color-mix(in srgb, var(--app-border) 72%, transparent);
+  background: color-mix(in srgb, var(--app-surface) 90%, black 10%);
+  color: var(--app-subtitle);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #ffffff 10%, transparent);
+}
+
+.top-nav-search-trigger .mantine-Button-label {
+  width: 100%;
+}
+
+.top-nav-search-trigger:hover {
+  border-color: color-mix(in srgb, var(--app-border) 45%, #22d3ee 55%);
+  background: color-mix(in srgb, var(--app-surface) 86%, #22d3ee 14%);
+}
+
+.top-nav-search-icon {
+  color: color-mix(in srgb, var(--app-subtitle) 78%, transparent);
+}
+
+.top-nav-search-placeholder {
+  color: color-mix(in srgb, var(--app-text) 72%, transparent);
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.top-nav-search-shortcut {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 84px;
+  height: 34px;
+  border-radius: 10px;
+  padding: 0 12px;
+  font-size: 15px;
+  font-weight: 700;
+  color: color-mix(in srgb, #f8fafc 88%, transparent);
+  background: color-mix(in srgb, #0f172a 82%, transparent);
+  border: 1px solid color-mix(in srgb, #334155 60%, transparent);
+}
+
+.top-nav-theme-toggle {
+  min-width: 40px;
+  width: 40px;
+  padding: 0;
+  justify-content: center;
+}
+
+
+.stats-badge {
+  background: var(--badge-bg);
+  color: var(--badge-fg);
+}
+
+.theme-toggle {
+  background: var(--toggle-bg);
+  color: var(--toggle-fg);
+}
+
+.theme-toggle:hover {
+  filter: brightness(1.08);
+}
+
+.logout-toggle {
+  background: color-mix(in srgb, #ef4444 20%, transparent);
+  color: #fca5a5;
+}
+
+.logout-toggle:hover {
+  background: color-mix(in srgb, #ef4444 30%, transparent);
+  color: #fecaca;
+}
+
+.user-badge {
+  border-color: var(--app-border);
+  color: var(--app-text);
+}
+
+.todo-input input,
+.todo-input input::placeholder,
+.todo-input label,
+.todo-input .mantine-InputWrapper-description,
+.todo-input .mantine-Input-section {
+  color: var(--app-text);
+}
+
+.todo-input input {
+  border-color: var(--app-border);
+  background: color-mix(in srgb, var(--app-surface) 88%, black 12%);
+}
+
+.add-button {
+  background: var(--button-bg);
+  color: var(--button-fg);
+}
+
+.add-button:hover {
+  background: var(--button-bg-hover);
+}
+
+.add-button:disabled {
+  background: color-mix(in srgb, var(--button-bg) 45%, gray 55%);
+  color: color-mix(in srgb, var(--button-fg) 55%, gray 45%);
+  opacity: 1;
+}
+
+.cta-button {
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.cta-button:hover {
+  transform: translateY(-1px);
+}
+
+.cta-primary {
+  animation: ctaPulse 2.2s ease-in-out infinite;
+}
+
+.cta-secondary {
+  animation: ctaFloat 2.8s ease-in-out infinite;
+}
+
+.auth-cards-grid .auth-option-card {
+  cursor: pointer;
+  transition: transform 180ms ease, border-color 180ms ease;
+}
+
+.auth-cards-grid .auth-option-card:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--app-border) 45%, #22d3ee 55%);
+}
+
+.task-clickable-card {
+  cursor: pointer;
+  transition: transform 140ms ease, border-color 140ms ease, background-color 140ms ease;
+}
+
+.task-clickable-card:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--app-border) 35%, #22d3ee 65%);
+  background: color-mix(in srgb, var(--app-surface) 90%, #22d3ee 10%);
+}
+
+.task-clickable-card:focus-visible {
+  outline: 2px solid #22d3ee;
+  outline-offset: 2px;
+}
+
+.task-title-inline {
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 10px 12px;
+  transition: border-color 140ms ease, background-color 140ms ease;
+}
+
+.task-title-inline.is-editable {
+  cursor: text;
+}
+
+.task-title-inline.is-editable:hover {
+  border-color: color-mix(in srgb, var(--app-border) 40%, #22d3ee 60%);
+  background: color-mix(in srgb, var(--app-surface) 92%, #22d3ee 8%);
+}
+
+@keyframes ctaPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(14, 116, 144, 0.28);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(14, 116, 144, 0);
+  }
+}
+
+@keyframes ctaFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+.mantine-Checkbox-label {
+  color: var(--app-text);
+}
+
+.mantine-ActionIcon-root[data-variant="subtle"] {
+  color: #f87171;
+}
+
+.mantine-ActionIcon-root[data-variant="subtle"]:hover {
+  background: color-mix(in srgb, #ef4444 26%, transparent);
+  color: #fecaca;
+}
+
+@media (max-width: 640px) {
+  .add-button {
+    min-width: 78px;
+  }
+
+  .nav-links {
+    max-width: 48vw;
+  }
+
+  .top-nav-search-trigger {
+    min-width: 180px;
+    height: 44px;
+  }
+
+  .top-nav-search-placeholder {
+    font-size: 16px;
+  }
+
+  .top-nav-search-shortcut {
+    min-width: 74px;
+    height: 30px;
+    font-size: 13px;
+  }
+
+  .top-nav-theme-toggle {
+    min-width: 36px;
+    width: 36px;
+  }
+
+  .auth-cards-grid {
+    grid-template-columns: 1fr;
+  }
+}
