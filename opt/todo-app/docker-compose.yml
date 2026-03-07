@@ -1,0 +1,18 @@
+services:
+  app1:
+    image: ghcr.io/your-user/todo-app:latest
+    container_name: todo-app
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+    networks:
+      - edge
+    mem_limit: 256m
+    cpus: 0.50
+    read_only: true
+    tmpfs:
+      - /tmp
+
+networks:
+  edge:
+    external: true
