@@ -1,18 +1,11 @@
-services:
-  app1:
-    image: ghcr.io/your-user/todo-app:latest
-    container_name: todo-app
+  todo-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.server
+    container_name: todo-server
     restart: unless-stopped
-    environment:
-      - NODE_ENV=production
-    networks:
-      - edge
+    env_file:
+      - .env
+    ports:
+      - "3000:3000"
     mem_limit: 256m
-    cpus: 0.50
-    read_only: true
-    tmpfs:
-      - /tmp
-
-networks:
-  edge:
-    external: true
