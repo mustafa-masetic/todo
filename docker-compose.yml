@@ -1,3 +1,4 @@
+services:
   todo-server:
     build:
       context: .
@@ -8,4 +9,14 @@
       - .env
     ports:
       - "3000:3000"
-    mem_limit: 256m
+
+  todo-client:
+    build:
+      context: .
+      dockerfile: Dockerfile.client
+    container_name: todo-client
+    restart: unless-stopped
+    depends_on:
+      - todo-server
+    ports:
+      - "8080:80"
