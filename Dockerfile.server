@@ -1,4 +1,4 @@
-FROM node:22-bookworm-slim
+FROM node:20-bookworm-slim
 
 WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@10.30.3 --activate
@@ -11,6 +11,7 @@ RUN pnpm install --no-frozen-lockfile --filter ./server...
 
 COPY server ./server
 RUN pnpm --filter ./server build
+RUN pnpm --filter ./server rebuild better-sqlite3
 
 WORKDIR /app/server
 ENV NODE_ENV=production
