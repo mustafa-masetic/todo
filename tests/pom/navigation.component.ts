@@ -60,22 +60,23 @@ export class NavigationComponent {
   }
 
   async goToSpaces() {
-    try {
-      await this.page
-        .getByRole("banner")
-        .getByRole("button", { name: "Spaces", exact: true })
-        .first()
-        .click({ timeout: 7_000 });
+    const desktopSpaces = this.page
+      .getByRole("banner")
+      .getByRole("button", { name: "Spaces", exact: true })
+      .first();
+    if (await desktopSpaces.isVisible()) {
+      await desktopSpaces.click();
       return;
-    } catch {
-      // Fall back to mobile drawer navigation.
     }
 
     const mobileToggle = this.page
       .getByTestId("nav-mobile-menu-toggle")
       .or(this.page.getByRole("button", { name: "Open navigation menu" }))
       .first();
-    await mobileToggle.click({ timeout: 10_000 });
+    if (!(await mobileToggle.isVisible())) {
+      throw new Error("Neither desktop nor mobile Spaces navigation is visible.");
+    }
+    await mobileToggle.click();
     await this.page
       .getByTestId("drawer-spaces-button")
       .or(this.page.getByRole("button", { name: "Spaces" }))
@@ -84,22 +85,23 @@ export class NavigationComponent {
   }
 
   async goToTasks() {
-    try {
-      await this.page
-        .getByRole("banner")
-        .getByRole("button", { name: "Tasks", exact: true })
-        .first()
-        .click({ timeout: 7_000 });
+    const desktopTasks = this.page
+      .getByRole("banner")
+      .getByRole("button", { name: "Tasks", exact: true })
+      .first();
+    if (await desktopTasks.isVisible()) {
+      await desktopTasks.click();
       return;
-    } catch {
-      // Fall back to mobile drawer navigation.
     }
 
     const mobileToggle = this.page
       .getByTestId("nav-mobile-menu-toggle")
       .or(this.page.getByRole("button", { name: "Open navigation menu" }))
       .first();
-    await mobileToggle.click({ timeout: 10_000 });
+    if (!(await mobileToggle.isVisible())) {
+      throw new Error("Neither desktop nor mobile Tasks navigation is visible.");
+    }
+    await mobileToggle.click();
     await this.page
       .getByTestId("drawer-tasks-button")
       .or(this.page.getByRole("button", { name: "Tasks" }))
