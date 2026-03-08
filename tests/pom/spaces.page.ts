@@ -23,6 +23,17 @@ export class SpacesPage {
   }
 
   async expectNoMatchingSpaces() {
-    await expect(this.page.getByText("No spaces match your search.")).toBeVisible();
+    const noMatchState = this.page.getByText("No spaces match your search.");
+    const noSpacesState = this.page.getByText("No spaces yet. Create one to get started.");
+    await expect(noMatchState.or(noSpacesState).first()).toBeVisible();
+  }
+
+  async deleteCurrentSpace() {
+    await this.page.getByRole("button", { name: "Delete space" }).click();
+    await this.page.getByTestId("delete-space-confirm-button").click();
+  }
+
+  async expectSpaceDeletedToast() {
+    await expect(this.page.getByText("Space deleted")).toBeVisible();
   }
 }

@@ -19,5 +19,7 @@ test.describe("Auth", () => {
     });
 
     await homePage.expectOverviewVisible();
+
+    await page.screenshot({ path: "user-registered.png" });
   });
 });

@@ -30,5 +30,37 @@ test.describe("Spaces", () => {
 
     await spacesPage.searchSpaces(spaceName);
     await spacesPage.expectSpaceVisible(spaceName);
+
+    await page.screenshot({ path: "space-created.png" });
+  });
+
+  test("creates and deletes a space", async ({ page }) => {
+    const authPage = new AuthPage(page);
+    const nav = new NavigationComponent(page);
+    const spacesPage = new SpacesPage(page);
+    const unique = Date.now();
+    const email = `playwright.spaces.delete.${unique}@example.com`;
+    const spaceName = `PW Space Delete ${unique}`;
+
+    await authPage.gotoRegister();
+    await authPage.register({
+      firstName: "Space",
+      lastName: "Delete",
+      email,
+      gender: "Other",
+      password: "TestPass123!"
+    });
+
+    await nav.goToSpaces();
+    await spacesPage.createSpace(spaceName, "Will be deleted by Playwright");
+    await spacesPage.expectSpaceVisible(spaceName);
+
+    await spacesPage.openSpaceByName(spaceName);
+    await spacesPage.deleteCurrentSpace();
+    await spacesPage.expectSpaceDeletedToast();
+
+    await nav.goToSpaces();
+    await spacesPage.searchSpaces(spaceName);
+    await spacesPage.expectNoMatchingSpaces();
   });
 });

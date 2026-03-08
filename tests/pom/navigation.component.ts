@@ -33,6 +33,32 @@ export class NavigationComponent {
     await this.searchTrigger().click();
   }
 
+  async logout() {
+    const mobileToggle = this.page
+      .getByTestId("nav-mobile-menu-toggle")
+      .or(this.page.getByRole("button", { name: "Open navigation menu" }))
+      .first();
+    if (await mobileToggle.isVisible()) {
+      await mobileToggle.click();
+      const drawerLogout = this.page.getByTestId("drawer-logout-button");
+      if (await drawerLogout.isVisible()) {
+        await drawerLogout.click();
+        return;
+      }
+    }
+
+    const accountMenuButton = this.page.getByTestId("nav-account-menu-button");
+    if (await accountMenuButton.isVisible()) {
+      await accountMenuButton.click();
+      await this.page
+        .getByTestId("menu-logout")
+        .or(this.page.getByRole("menuitem", { name: "Logout" }))
+        .first()
+        .click();
+      return;
+    }
+  }
+
   async goToSpaces() {
     try {
       await this.page

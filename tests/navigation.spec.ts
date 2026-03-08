@@ -26,5 +26,7 @@ test.describe("Navigation", () => {
     await nav.openGlobalSearch();
     await expect(page.getByRole("dialog", { name: "Search" })).toBeVisible();
     await expect(page.getByTestId("global-search-input")).toBeVisible();
+
+    await page.screenshot({ path: "global-search-opened.png" });
   });
 });
