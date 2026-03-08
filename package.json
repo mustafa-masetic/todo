@@ -12,9 +12,14 @@
     "create-data": "pnpm run create:data",
     "seed:data": "node ./scripts/seed-via-api.mjs",
     "data:seed": "pnpm run seed:data",
-    "data:reset-seed": "node ./scripts/reset-and-seed.mjs"
+    "data:reset-seed": "node ./scripts/reset-and-seed.mjs",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:install": "playwright install --with-deps"
   },
   "devDependencies": {
+    "@playwright/test": "^1.52.0",
     "concurrently": "^9.1.2"
   }
 }

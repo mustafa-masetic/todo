@@ -1,0 +1,11 @@
+{
+  email mmasetic@gmail.com
+}
+
+todo-app.yourdomain.com {
+  reverse_proxy todo-app:3000
+}
+
+app2.yourdomain.com {
+  reverse_proxy app2:8080
+}

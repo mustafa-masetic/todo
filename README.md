@@ -60,6 +60,33 @@ export JWT_SECRET="replace-with-a-strong-secret"
 - `pnpm dev` - run client and server together
 - `pnpm build` - build both apps
 - `pnpm start` - run compiled server
+- `pnpm test:e2e` - run Playwright tests
+- `pnpm test:e2e:headed` - run Playwright in headed mode
+- `pnpm test:e2e:ui` - run Playwright UI mode
+- `pnpm test:e2e:install` - install Playwright browsers
+
+## E2E tests
+
+- Playwright config: `playwright.config.ts`
+- Tests directory: `Test/`
+- Test id attribute: `data-test-id`
+
+Run locally (starts app via `pnpm dev` automatically):
+
+```bash
+PLAYWRIGHT_BASE_URL=http://127.0.0.1:5173 pnpm test:e2e
+```
+
+Run against deployed environment (no local dev server):
+
+```bash
+PLAYWRIGHT_BASE_URL=http://217.160.34.25:8081 pnpm test:e2e
+```
+
+Optional env vars for login-based tests:
+
+- `E2E_EMAIL`
+- `E2E_PASSWORD`
 
 ## CI/CD staging -> production
 
@@ -69,7 +96,8 @@ This repo includes a GitHub Actions pipeline at `.github/workflows/deploy.yml`:
 2. Deploy the same tag to staging (`todo-staging`) on port `8081`.
 3. Seed staging data by running `pnpm run seed:data` against staging API.
 4. Run smoke tests against staging (`/` and `/api/spaces`).
-5. Deploy the same validated tag to production (`todo-prod`) on port `8080`.
+5. Run Playwright E2E tests against staging.
+6. Deploy the same validated tag to production (`todo-prod`) on port `8080`.
 
 Deploy compose template: `infra/deploy/docker-compose.deploy.yml`.
 
@@ -81,3 +109,8 @@ Required GitHub repository secrets:
 - `GHCR_READ_TOKEN`
 - `STAGING_JWT_SECRET`
 - `PROD_JWT_SECRET`
+
+Optional secrets for login-based Playwright tests:
+
+- `E2E_EMAIL`
+- `E2E_PASSWORD`

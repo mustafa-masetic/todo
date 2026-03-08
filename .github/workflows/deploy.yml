@@ -150,11 +150,50 @@ jobs:
               exit 1
             fi
 
+  e2e_staging:
+    runs-on: ubuntu-latest
+    needs: smoke_test_staging
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run Playwright E2E on staging
+        env:
+          PLAYWRIGHT_BASE_URL: http://${{ secrets.VPS_HOST }}:8081
+          E2E_EMAIL: ${{ secrets.E2E_EMAIL }}
+          E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
+        run: pnpm test:e2e
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-staging
+          path: |
+            playwright-report
+            test-results
+          if-no-files-found: ignore
+
   deploy_prod:
     runs-on: ubuntu-latest
     needs:
       - build
-      - smoke_test_staging
+      - e2e_staging
     steps:
       - name: Checkout
         uses: actions/checkout@v4
