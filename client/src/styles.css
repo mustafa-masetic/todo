@@ -100,6 +100,14 @@ body {
   overflow-x: auto;
 }
 
+.top-nav-bar {
+  padding: 8px 0;
+}
+
+.top-nav-controls {
+  margin-left: auto;
+}
+
 .top-nav-button {
   color: var(--app-subtitle);
   border: 1px solid transparent;
@@ -171,6 +179,13 @@ body {
   width: 40px;
   padding: 0;
   justify-content: center;
+}
+
+.top-nav-user-button .mantine-Button-label {
+  max-width: 116px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 
@@ -289,6 +304,14 @@ body {
   background: color-mix(in srgb, var(--app-surface) 92%, #22d3ee 8%);
 }
 
+.task-detail-layout {
+  gap: 12px;
+}
+
+.task-detail-controls {
+  margin-left: auto;
+}
+
 @keyframes ctaPulse {
   0%,
   100% {
@@ -322,33 +345,75 @@ body {
   color: #fecaca;
 }
 
-@media (max-width: 640px) {
-  .add-button {
-    min-width: 78px;
+@media (max-width: 48em) {
+  .page-container {
+    min-height: calc(100vh - 1rem);
+  }
+
+  .top-nav-bar {
+    align-items: flex-start;
   }
 
   .nav-links {
-    max-width: 48vw;
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .top-nav-controls {
+    width: 100%;
+    justify-content: flex-end;
   }
 
   .top-nav-search-trigger {
-    min-width: 180px;
+    min-width: 0;
+    flex: 1 1 220px;
     height: 44px;
+  }
+
+  .top-nav-search-shortcut {
+    display: none;
   }
 
   .top-nav-search-placeholder {
     font-size: 16px;
   }
 
-  .top-nav-search-shortcut {
-    min-width: 74px;
-    height: 30px;
-    font-size: 13px;
-  }
-
   .top-nav-theme-toggle {
     min-width: 36px;
     width: 36px;
+  }
+
+  .top-nav-user-button {
+    flex: 0 1 auto;
+  }
+
+  .top-nav-user-button .mantine-Button-label {
+    max-width: 88px;
+  }
+
+  .surface-card .mantine-Group-root {
+    row-gap: 10px;
+  }
+
+  .task-detail-layout {
+    flex-direction: column;
+  }
+
+  .task-detail-controls {
+    width: 100%;
+    margin-left: 0;
+    padding-top: 4px;
+    border-top: 1px solid color-mix(in srgb, var(--app-border) 72%, transparent);
+  }
+
+  .task-detail-controls .mantine-Button-root {
+    min-height: 38px;
+  }
+}
+
+@media (max-width: 640px) {
+  .add-button {
+    min-width: 78px;
   }
 
   .auth-cards-grid {

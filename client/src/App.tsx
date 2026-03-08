@@ -5,10 +5,13 @@ import {
   Badge,
   Breadcrumbs,
   Box,
+  Burger,
   Button,
   Card,
   Checkbox,
   Container,
+  Divider,
+  Drawer,
   Group,
   Loader,
   Menu,
@@ -28,6 +31,7 @@ import {
   useComputedColorScheme,
   useMantineColorScheme
 } from "@mantine/core";
+import { useMediaQuery } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import {
   IconCheck,
@@ -43,7 +47,7 @@ import {
   IconUsers,
   IconWriting
 } from "@tabler/icons-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type MutableRefObject } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   acceptInvite,
@@ -248,8 +252,12 @@ function App() {
     spaceId: number;
     spaceName: string;
   } | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const isMobile = useMediaQuery("(max-width: 48em)");
   const globalSearchInputRef = useRef<HTMLInputElement>(null);
   const inviteSearchInputRef = useRef<HTMLInputElement>(null);
+  const taskTitleTapRef = useRef(0);
+  const taskDescriptionTapRef = useRef(0);
   const hasInitializedSpacesSearchRef = useRef(false);
   const hasInitializedTaskFiltersRef = useRef(false);
   const globalSpaceSearchCacheRef = useRef<
@@ -1142,6 +1150,22 @@ function App() {
     navigateTo("/");
   };
 
+  const handleMobileDoubleTapEdit = (
+    tapRef: MutableRefObject<number>,
+    activate: () => void
+  ) => {
+    if (!isMobile || !taskCanWrite) {
+      return;
+    }
+    const now = Date.now();
+    if (now - tapRef.current < 320) {
+      activate();
+      tapRef.current = 0;
+      return;
+    }
+    tapRef.current = now;
+  };
+
   const navigateTo = (path: string) => {
     const nextUrl = new URL(path, window.location.origin);
     const nextPath = nextUrl.pathname;
@@ -1452,12 +1476,29 @@ function App() {
     return () => window.clearTimeout(timer);
   }, [inviteModalOpen]);
 
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [currentPath]);
+
   return (
-    <AppShell header={{ height: 74 }} padding="md" className="app-shell">
+    <AppShell header={{ height: isMobile ? 126 : 74 }} padding="md" className="app-shell">
       <AppShell.Header className="app-header">
         <Container size="lg" h="100%">
-          <Group justify="space-between" align="center" wrap="nowrap" h="100%">
-            <Group gap="xs" className="nav-links">
+          <Group
+            justify="space-between"
+            align="center"
+            wrap={isMobile ? "wrap" : "nowrap"}
+            h="100%"
+            className="top-nav-bar"
+          >
+            <Group gap="xs" className="nav-links" wrap="nowrap">
+              {isMobile && meQuery.data ? (
+                <Burger
+                  opened={mobileMenuOpen}
+                  onClick={() => setMobileMenuOpen((open) => !open)}
+                  aria-label="Open navigation menu"
+                />
+              ) : null}
               <Button
                 variant="subtle"
                 className={`top-nav-button ${currentPath === "/" ? "is-active" : ""}`}
@@ -1465,7 +1506,7 @@ function App() {
               >
                 Home
               </Button>
-              {meQuery.data ? (
+              {meQuery.data && !isMobile ? (
                 <>
                   <Button
                     variant="subtle"
@@ -1495,7 +1536,7 @@ function App() {
               ) : null}
             </Group>
 
-            <Group gap="xs" wrap="nowrap">
+            <Group gap="xs" wrap={isMobile ? "wrap" : "nowrap"} className="top-nav-controls">
               {meQuery.data ? (
                 <Button
                   variant="light"
@@ -1537,6 +1578,7 @@ function App() {
                   <Menu.Target>
                     <Button
                       variant="light"
+                      className="top-nav-user-button"
                       rightSection={<IconChevronDown size={14} />}
                       leftSection={
                         <Avatar src={meQuery.data.avatarUrl || null} size="sm" radius="xl">
@@ -1544,7 +1586,7 @@ function App() {
                         </Avatar>
                       }
                     >
-                      {meQuery.data.firstName}
+                      {isMobile ? "Account" : meQuery.data.firstName}
                     </Button>
                   </Menu.Target>
                   <Menu.Dropdown>
@@ -1581,6 +1623,79 @@ function App() {
           </Group>
         </Container>
       </AppShell.Header>
+      <Drawer
+        opened={mobileMenuOpen}
+        onClose={() => setMobileMenuOpen(false)}
+        title="Navigation"
+        position="left"
+        size="86%"
+      >
+        <Stack gap="xs">
+          <Button
+            variant={currentPath === "/" ? "filled" : "light"}
+            onClick={() => navigateTo("/")}
+            fullWidth
+          >
+            Home
+          </Button>
+          {meQuery.data ? (
+            <>
+              <Button
+                variant={currentPath.startsWith("/spaces") ? "filled" : "light"}
+                onClick={() => navigateTo("/spaces")}
+                fullWidth
+              >
+                Spaces
+              </Button>
+              <Button
+                variant={currentPath.startsWith("/tasks") ? "filled" : "light"}
+                onClick={() => navigateTo("/tasks")}
+                fullWidth
+              >
+                Tasks
+              </Button>
+              {isAdmin ? (
+                <Button
+                  variant={currentPath === "/admin" ? "filled" : "light"}
+                  leftSection={<IconShield size={16} />}
+                  onClick={() => navigateTo("/admin")}
+                  fullWidth
+                >
+                  Admin
+                </Button>
+              ) : null}
+              <Divider my="xs" />
+              <Button
+                variant="light"
+                onClick={() => navigateTo("/account/profile")}
+                fullWidth
+              >
+                Edit profile
+              </Button>
+              <Button
+                variant="light"
+                onClick={() => navigateTo("/account/settings")}
+                fullWidth
+              >
+                Account settings
+              </Button>
+              <Button
+                color="red"
+                variant="light"
+                leftSection={<IconLogout size={16} />}
+                onClick={logout}
+                fullWidth
+              >
+                Logout
+              </Button>
+            </>
+          ) : (
+            <Button variant="light" onClick={() => navigateTo("/login")} fullWidth>
+              Login
+            </Button>
+          )}
+        </Stack>
+      </Drawer>
       <AppShell.Main>
         <Container size="lg" py="lg" className="page-container">
           <Stack gap="md" className="page-content">
@@ -1997,7 +2112,8 @@ function App() {
                               </Button>
                             </Group>
                           </Group>
-                          <Table striped highlightOnHover withTableBorder withColumnBorders>
+                          <Table.ScrollContainer minWidth={980}>
+                            <Table striped highlightOnHover withTableBorder withColumnBorders>
                             <Table.Thead>
                               <Table.Tr>
                                 <Table.Th>
@@ -2107,7 +2223,8 @@ function App() {
                                 </Table.Tr>
                               ))}
                             </Table.Tbody>
-                          </Table>
+                            </Table>
+                          </Table.ScrollContainer>
                         </Stack>
                       </Tabs.Panel>
 
@@ -2138,7 +2255,8 @@ function App() {
                               Delete selected
                             </Button>
                           </Group>
-                          <Table striped highlightOnHover withTableBorder withColumnBorders>
+                          <Table.ScrollContainer minWidth={920}>
+                            <Table striped highlightOnHover withTableBorder withColumnBorders>
                             <Table.Thead>
                               <Table.Tr>
                                 <Table.Th>
@@ -2226,7 +2344,8 @@ function App() {
                                 </Table.Tr>
                               ))}
                             </Table.Tbody>
-                          </Table>
+                            </Table>
+                          </Table.ScrollContainer>
                         </Stack>
                       </Tabs.Panel>
 
@@ -2282,7 +2401,8 @@ function App() {
                               </Button>
                             </Group>
                           </Group>
-                          <Table striped highlightOnHover withTableBorder withColumnBorders>
+                          <Table.ScrollContainer minWidth={920}>
+                            <Table striped highlightOnHover withTableBorder withColumnBorders>
                             <Table.Thead>
                               <Table.Tr>
                                 <Table.Th>
@@ -2366,7 +2486,8 @@ function App() {
                                 </Table.Tr>
                               ))}
                             </Table.Tbody>
-                          </Table>
+                            </Table>
+                          </Table.ScrollContainer>
                         </Stack>
                       </Tabs.Panel>
                     </Tabs>
@@ -2763,44 +2884,46 @@ function App() {
                             {activityMembersQuery.isLoading || activityInvitesQuery.isLoading ? (
                               <Loader size="sm" />
                             ) : (
-                              <Table striped highlightOnHover withTableBorder withColumnBorders>
-                                <Table.Thead>
-                                  <Table.Tr>
-                                    <Table.Th>First Name</Table.Th>
-                                    <Table.Th>Last Name</Table.Th>
-                                    <Table.Th>Email</Table.Th>
-                                    <Table.Th>Status</Table.Th>
-                                  </Table.Tr>
-                                </Table.Thead>
-                                <Table.Tbody>
-                                  {(activityMembersQuery.data ?? []).map((member) => (
-                                    <Table.Tr key={`member-${member.userId}`}>
-                                      <Table.Td>{member.firstName || "-"}</Table.Td>
-                                      <Table.Td>{member.lastName || "-"}</Table.Td>
-                                      <Table.Td>{member.email}</Table.Td>
-                                      <Table.Td>
-                                        <Badge variant="light">
-                                          {member.role === "owner" ? "member (owner)" : "member"}
-                                        </Badge>
-                                      </Table.Td>
+                              <Table.ScrollContainer minWidth={700}>
+                                <Table striped highlightOnHover withTableBorder withColumnBorders>
+                                  <Table.Thead>
+                                    <Table.Tr>
+                                      <Table.Th>First Name</Table.Th>
+                                      <Table.Th>Last Name</Table.Th>
+                                      <Table.Th>Email</Table.Th>
+                                      <Table.Th>Status</Table.Th>
                                     </Table.Tr>
-                                  ))}
-                                  {(activityInvitesQuery.data ?? [])
-                                    .filter((invite) => invite.status === "pending")
-                                    .map((invite) => (
-                                      <Table.Tr key={`invite-${invite.id}`}>
-                                        <Table.Td>{invite.invitedFirstName || "-"}</Table.Td>
-                                        <Table.Td>{invite.invitedLastName || "-"}</Table.Td>
-                                        <Table.Td>{invite.email}</Table.Td>
+                                  </Table.Thead>
+                                  <Table.Tbody>
+                                    {(activityMembersQuery.data ?? []).map((member) => (
+                                      <Table.Tr key={`member-${member.userId}`}>
+                                        <Table.Td>{member.firstName || "-"}</Table.Td>
+                                        <Table.Td>{member.lastName || "-"}</Table.Td>
+                                        <Table.Td>{member.email}</Table.Td>
                                         <Table.Td>
-                                          <Badge color="yellow" variant="light">
-                                            invited
+                                          <Badge variant="light">
+                                            {member.role === "owner" ? "member (owner)" : "member"}
                                           </Badge>
                                         </Table.Td>
                                       </Table.Tr>
                                     ))}
-                                </Table.Tbody>
-                              </Table>
+                                    {(activityInvitesQuery.data ?? [])
+                                      .filter((invite) => invite.status === "pending")
+                                      .map((invite) => (
+                                        <Table.Tr key={`invite-${invite.id}`}>
+                                          <Table.Td>{invite.invitedFirstName || "-"}</Table.Td>
+                                          <Table.Td>{invite.invitedLastName || "-"}</Table.Td>
+                                          <Table.Td>{invite.email}</Table.Td>
+                                          <Table.Td>
+                                            <Badge color="yellow" variant="light">
+                                              invited
+                                            </Badge>
+                                          </Table.Td>
+                                        </Table.Tr>
+                                      ))}
+                                  </Table.Tbody>
+                                </Table>
+                              </Table.ScrollContainer>
                             )}
                           </Stack>
                         </Tabs.Panel>
@@ -3044,7 +3167,12 @@ function App() {
                     </Breadcrumbs>
                     <Card withBorder className="surface-card">
                       <Stack gap="md">
-                        <Group justify="space-between" align="flex-start" wrap="nowrap">
+                        <Group
+                          justify="space-between"
+                          align="flex-start"
+                          wrap={isMobile ? "wrap" : "nowrap"}
+                          className="task-detail-layout"
+                        >
                         <Box style={{ width: "min(100%, 760px)", minWidth: 0 }}>
                           <Stack gap="sm">
                             {taskTitleEditMode && taskCanWrite ? (
@@ -3075,6 +3203,11 @@ function App() {
                                     setTaskTitleEditMode(true);
                                   }
                                 }}
+                                onClick={() =>
+                                  handleMobileDoubleTapEdit(taskTitleTapRef, () =>
+                                    setTaskTitleEditMode(true)
+                                  )
+                                }
                               >
                                 <Title
                                   order={3}
@@ -3113,6 +3246,11 @@ function App() {
                                     setTaskDescriptionEditMode(true);
                                   }
                                 }}
+                                onClick={() =>
+                                  handleMobileDoubleTapEdit(taskDescriptionTapRef, () =>
+                                    setTaskDescriptionEditMode(true)
+                                  )
+                                }
                               >
                                 <Text
                                   c="var(--app-text)"
@@ -3124,8 +3262,17 @@ function App() {
                             )}
                           </Stack>
                         </Box>
-                        <Stack gap="xs" align="flex-end">
-                          <Group align="center" gap="xs" wrap="nowrap">
+                        <Stack
+                          gap="xs"
+                          align={isMobile ? "stretch" : "flex-end"}
+                          className="task-detail-controls"
+                        >
+                          <Group
+                            align="center"
+                            gap="xs"
+                            wrap={isMobile ? "wrap" : "nowrap"}
+                            justify={isMobile ? "flex-start" : "flex-end"}
+                          >
                             <Button
                               leftSection={<IconWriting size={16} />}
                               loading={updateTaskDetailMutation.isPending}
@@ -3182,7 +3329,7 @@ function App() {
                               </Button>
                             ) : null}
                           </Group>
-                          <Stack gap="xs" w={260}>
+                          <Stack gap="xs" w={isMobile ? "100%" : 260}>
                             <Select
                               className="todo-input"
                               label="Status"
