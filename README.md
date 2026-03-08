@@ -98,6 +98,7 @@ This repo includes a GitHub Actions pipeline at `.github/workflows/deploy.yml`:
 4. Run smoke tests against staging (`/` and `/api/spaces`).
 5. Run Playwright E2E tests against staging.
 6. Deploy the same validated tag to production (`todo-prod`) on port `8080`.
+7. Publish Playwright HTML report to GitHub Pages.
 
 Deploy compose template: `infra/deploy/docker-compose.deploy.yml`.
 
@@ -114,3 +115,12 @@ Optional secrets for login-based Playwright tests:
 
 - `E2E_EMAIL`
 - `E2E_PASSWORD`
+
+## Playwright report on GitHub Pages
+
+The deploy workflow uploads the Playwright HTML report and publishes it to GitHub Pages.
+
+One-time setup in repository settings:
+
+1. `Settings -> Pages`
+2. Under "Build and deployment", set source to `GitHub Actions`
