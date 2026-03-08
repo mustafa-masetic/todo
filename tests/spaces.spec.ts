@@ -1,0 +1,34 @@
+import { test } from "@playwright/test";
+import { AuthPage } from "./pom/auth.page";
+import { NavigationComponent } from "./pom/navigation.component";
+import { SpacesPage } from "./pom/spaces.page";
+
+test.describe("Spaces", () => {
+  test("creates and searches a space", async ({ page }) => {
+    const authPage = new AuthPage(page);
+    const nav = new NavigationComponent(page);
+    const spacesPage = new SpacesPage(page);
+    const unique = Date.now();
+    const email = `playwright.spaces.${unique}@example.com`;
+    const spaceName = `PW Space ${unique}`;
+
+    await authPage.gotoRegister();
+    await authPage.register({
+      firstName: "Space",
+      lastName: "Tester",
+      email,
+      gender: "Other",
+      password: "TestPass123!"
+    });
+
+    await nav.goToSpaces();
+    await spacesPage.createSpace(spaceName, "Created by Playwright");
+    await spacesPage.expectSpaceVisible(spaceName);
+
+    await spacesPage.searchSpaces("no-match-playwright-value");
+    await spacesPage.expectNoMatchingSpaces();
+
+    await spacesPage.searchSpaces(spaceName);
+    await spacesPage.expectSpaceVisible(spaceName);
+  });
+});
