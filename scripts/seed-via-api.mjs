@@ -148,25 +148,36 @@ async function main() {
   console.log(`Users ready: ${authByUserId.size}`);
 
   const fixtureAdmins = users.filter((user) => Number(user.isAdmin || 0) === 1);
-  if (fixtureAdmins.length > 0) {
-    const bootstrapAdminFixture = fixtureAdmins[0];
-    const bootstrapAdminAuth = authByUserId.get(bootstrapAdminFixture.id);
-    if (!bootstrapAdminAuth) {
-      throw new Error(`Admin auth missing for fixture userId ${bootstrapAdminFixture.id}`);
-    }
+  const bootstrapAdminAuth = Array.from(authByUserId.values()).find(
+    (auth) => Number(auth?.user?.isAdmin || 0) === 1
+  );
 
+  if (fixtureAdmins.length > 0 && bootstrapAdminAuth) {
     for (const fixtureUser of fixtureAdmins) {
       const targetAuth = authByUserId.get(fixtureUser.id);
       if (!targetAuth) {
         throw new Error(`Target auth missing for fixture userId ${fixtureUser.id}`);
       }
 
-      await request(`/api/admin/users/${targetAuth.user.id}`, {
-        method: 'PATCH',
-        headers: authHeaders(bootstrapAdminAuth.token),
-        body: JSON.stringify({ isAdmin: true })
-      });
+      try {
+        await request(`/api/admin/users/${targetAuth.user.id}`, {
+          method: 'PATCH',
+          headers: authHeaders(bootstrapAdminAuth.token),
+          body: JSON.stringify({ isAdmin: true })
+        });
+      } catch (error) {
+        const message = String(error?.message || "");
+        if (message.includes("[403]")) {
+          console.warn(
+            `Admin promotion skipped for user ${targetAuth.user.email}: ${message}`
+          );
+          continue;
+        }
+        throw error;
+      }
     }
+  } else if (fixtureAdmins.length > 0) {
+    console.warn("No admin token available; skipping admin promotion for fixture users.");
   }
 
   const spaceIdByFixtureId = new Map();
