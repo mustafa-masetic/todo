@@ -192,14 +192,13 @@ jobs:
           if [ -d playwright-report ]; then
             cp -R playwright-report/. pages-playwright-report/
           else
-            cat <<'EOF' > pages-playwright-report/index.html
-            <html>
-              <body>
-                <h1>Playwright report not available</h1>
-                <p>The test run failed before generating an HTML report.</p>
-              </body>
-            </html>
-            EOF
+            printf '%s\n' \
+              '<html>' \
+              '  <body>' \
+              '    <h1>Playwright report not available</h1>' \
+              '    <p>The test run failed before generating an HTML report.</p>' \
+              '  </body>' \
+              '</html>' > pages-playwright-report/index.html
           fi
 
       - name: Upload Playwright report
