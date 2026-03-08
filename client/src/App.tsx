@@ -1496,12 +1496,14 @@ function App() {
             <Group gap="xs" className="nav-links" wrap="nowrap">
               {isMobile && meQuery.data ? (
                 <Burger
+                  data-test-id="nav-mobile-menu-toggle"
                   opened={mobileMenuOpen}
                   onClick={() => setMobileMenuOpen((open) => !open)}
                   aria-label="Open navigation menu"
                 />
               ) : null}
               <Button
+                data-test-id="nav-home-button"
                 variant="subtle"
                 className={`top-nav-button ${currentPath === "/" ? "is-active" : ""}`}
                 onClick={() => navigateTo("/")}
@@ -1511,6 +1513,7 @@ function App() {
               {meQuery.data && !isMobile ? (
                 <>
                   <Button
+                    data-test-id="nav-spaces-button"
                     variant="subtle"
                     className={`top-nav-button ${currentPath.startsWith("/spaces") ? "is-active" : ""}`}
                     onClick={() => navigateTo("/spaces")}
@@ -1518,6 +1521,7 @@ function App() {
                     Spaces
                   </Button>
                   <Button
+                    data-test-id="nav-tasks-button"
                     variant="subtle"
                     className={`top-nav-button ${currentPath.startsWith("/tasks") ? "is-active" : ""}`}
                     onClick={() => navigateTo("/tasks")}
@@ -1526,6 +1530,7 @@ function App() {
                   </Button>
                   {isAdmin ? (
                     <Button
+                      data-test-id="nav-admin-button"
                       variant="subtle"
                       leftSection={<IconShield size={16} />}
                       className={`top-nav-button ${currentPath === "/admin" ? "is-active" : ""}`}
@@ -1541,6 +1546,7 @@ function App() {
             <Group gap="xs" wrap="nowrap" className="top-nav-controls">
               {meQuery.data && !isMobile ? (
                 <Button
+                  data-test-id="nav-search-button"
                   variant="light"
                   className="top-nav-search-trigger"
                   onClick={() => setGlobalSearchOpen(true)}
@@ -1558,6 +1564,7 @@ function App() {
               ) : null}
               {meQuery.data && isMobile ? (
                 <ActionIcon
+                  data-test-id="nav-search-icon-button"
                   variant="light"
                   size={36}
                   radius="md"
@@ -1569,6 +1576,7 @@ function App() {
                 </ActionIcon>
               ) : null}
               <Button
+                data-test-id="nav-theme-toggle"
                 variant="light"
                 className="top-nav-theme-toggle"
                 title={`Theme: ${
@@ -1592,6 +1600,7 @@ function App() {
                   <Menu.Target>
                     {isMobile ? (
                       <ActionIcon
+                        data-test-id="nav-account-menu-button"
                         variant="light"
                         size={36}
                         radius="md"
@@ -1606,6 +1615,7 @@ function App() {
                       </ActionIcon>
                     ) : (
                       <Button
+                        data-test-id="nav-account-menu-button"
                         variant="light"
                         className="top-nav-user-button"
                         rightSection={<IconChevronDown size={14} />}
@@ -1622,18 +1632,21 @@ function App() {
                   <Menu.Dropdown>
                     <Menu.Label>{meQuery.data.email}</Menu.Label>
                     <Menu.Item
+                      data-test-id="menu-edit-profile"
                       leftSection={<IconSettings size={14} />}
                       onClick={() => navigateTo("/account/profile")}
                     >
                       Edit profile
                     </Menu.Item>
                     <Menu.Item
+                      data-test-id="menu-account-settings"
                       leftSection={<IconSettings size={14} />}
                       onClick={() => navigateTo("/account/settings")}
                     >
                       Account settings
                     </Menu.Item>
                     <Menu.Item
+                      data-test-id="menu-logout"
                       leftSection={<IconLogout size={14} />}
                       color="red"
                       onClick={logout}
@@ -1644,7 +1657,7 @@ function App() {
                 </Menu>
               ) : (
                 <Group gap="xs">
-                  <Button variant="light" onClick={() => navigateTo("/login")}>
+                  <Button data-test-id="nav-login-button" variant="light" onClick={() => navigateTo("/login")}>
                     Login
                   </Button>
                 </Group>
@@ -1662,6 +1675,7 @@ function App() {
       >
         <Stack gap="xs">
           <Button
+            data-test-id="drawer-home-button"
             variant={currentPath === "/" ? "filled" : "light"}
             onClick={() => navigateTo("/")}
             fullWidth
@@ -1671,6 +1685,7 @@ function App() {
           {meQuery.data ? (
             <>
               <Button
+                data-test-id="drawer-spaces-button"
                 variant={currentPath.startsWith("/spaces") ? "filled" : "light"}
                 onClick={() => navigateTo("/spaces")}
                 fullWidth
@@ -1678,6 +1693,7 @@ function App() {
                 Spaces
               </Button>
               <Button
+                data-test-id="drawer-tasks-button"
                 variant={currentPath.startsWith("/tasks") ? "filled" : "light"}
                 onClick={() => navigateTo("/tasks")}
                 fullWidth
@@ -1686,6 +1702,7 @@ function App() {
               </Button>
               {isAdmin ? (
                 <Button
+                  data-test-id="drawer-admin-button"
                   variant={currentPath === "/admin" ? "filled" : "light"}
                   leftSection={<IconShield size={16} />}
                   onClick={() => navigateTo("/admin")}
@@ -1696,6 +1713,7 @@ function App() {
               ) : null}
               <Divider my="xs" />
               <Button
+                data-test-id="drawer-edit-profile-button"
                 variant="light"
                 onClick={() => navigateTo("/account/profile")}
                 fullWidth
@@ -1703,6 +1721,7 @@ function App() {
                 Edit profile
               </Button>
               <Button
+                data-test-id="drawer-account-settings-button"
                 variant="light"
                 onClick={() => navigateTo("/account/settings")}
                 fullWidth
@@ -1710,6 +1729,7 @@ function App() {
                 Account settings
               </Button>
               <Button
+                data-test-id="drawer-logout-button"
                 color="red"
                 variant="light"
                 leftSection={<IconLogout size={16} />}
@@ -1720,7 +1740,7 @@ function App() {
               </Button>
             </>
           ) : (
-            <Button variant="light" onClick={() => navigateTo("/login")} fullWidth>
+            <Button data-test-id="drawer-login-button" variant="light" onClick={() => navigateTo("/login")} fullWidth>
               Login
             </Button>
           )}
@@ -1800,6 +1820,7 @@ function App() {
                       Login
                     </Button>
                     <Button
+                      data-test-id="hero-register-button"
                       variant={authMode === "register" ? "filled" : "light"}
                       leftSection={<IconUserPlus size={16} />}
                       onClick={() => navigateTo("/register")}
@@ -1811,6 +1832,7 @@ function App() {
                   {authMode === "register" ? (
                     <Group grow>
                       <TextInput
+                        data-test-id="auth-first-name-input"
                         label="First Name"
                         value={profileForm.firstName}
                         onChange={(event) => {
@@ -1823,6 +1845,7 @@ function App() {
                         className="todo-input"
                       />
                       <TextInput
+                        data-test-id="auth-last-name-input"
                         label="Last Name"
                         value={profileForm.lastName}
                         onChange={(event) => {
@@ -1838,6 +1861,7 @@ function App() {
                   ) : null}
 
                   <TextInput
+                    data-test-id="auth-email-input"
                     label="Email"
                     placeholder="you@example.com"
                     value={profileForm.email}
@@ -1853,6 +1877,7 @@ function App() {
 
                   {authMode === "register" ? (
                     <Select
+                      data-test-id="auth-gender-select"
                       label="Gender"
                       className="todo-input"
                       data={genderOptions}
@@ -1867,6 +1892,7 @@ function App() {
                   ) : null}
 
                   <PasswordInput
+                    data-test-id="auth-password-input"
                     label="Password"
                     placeholder="At least 8 characters"
                     value={password}
@@ -1874,6 +1900,7 @@ function App() {
                     className="todo-input"
                   />
                   <Button
+                    data-test-id="auth-submit-button"
                     className="add-button"
                     loading={authMutation.isPending}
                     disabled={!authCanSubmit}
@@ -1940,6 +1967,7 @@ function App() {
                               </Text>
                             </Box>
                             <Button
+                              data-test-id="invitation-accept-button"
                               size="xs"
                               loading={acceptInviteMutation.isPending}
                               onClick={() => acceptInviteMutation.mutate(invite.id)}
@@ -2692,6 +2720,7 @@ function App() {
                   <Stack gap="sm">
                     <Group justify="space-between" align="center" wrap="nowrap">
                       <TextInput
+                        data-test-id="spaces-search-input"
                         className="todo-input"
                         placeholder="Search spaces by name or description"
                         leftSection={<IconSearch size={16} />}
@@ -2700,6 +2729,7 @@ function App() {
                         style={{ flex: 1 }}
                       />
                       <Button
+                        data-test-id="spaces-create-button"
                         className="add-button"
                         leftSection={<IconPlus size={16} />}
                         onClick={() => setSpaceModalOpen(true)}
@@ -2812,10 +2842,11 @@ function App() {
                           <Text size="sm" c="var(--app-text)">
                             {invite.spaceName} invited by {invite.invitedByEmail}
                           </Text>
-                          <Button
-                            size="xs"
-                            variant="light"
-                            loading={acceptInviteMutation.isPending}
+                            <Button
+                              data-test-id="spaces-invite-accept-button"
+                              size="xs"
+                              variant="light"
+                              loading={acceptInviteMutation.isPending}
                             onClick={() => acceptInviteMutation.mutate(invite.id)}
                           >
                             Accept
@@ -2903,6 +2934,7 @@ function App() {
                                   Invite people by searching first name, last name, or email.
                                 </Text>
                                 <Button
+                                  data-test-id="space-invite-people-button"
                                   leftSection={<IconUsers size={16} />}
                                   onClick={() => setInviteModalOpen(true)}
                                 >
@@ -2971,6 +3003,7 @@ function App() {
                                   {activityStats.done}/{activityStats.total} done
                                 </Badge>
                                 <Button
+                                  data-test-id="space-add-task-button"
                                   leftSection={<IconPlus size={16} />}
                                   onClick={() => {
                                     setTaskModalOpen(true);
@@ -3042,6 +3075,7 @@ function App() {
                   <Stack gap="sm">
                     <Title order={4}>Tasks</Title>
                     <Select
+                      data-test-id="tasks-space-filter"
                       className="todo-input"
                       label="Filter by space"
                       value={tasksFilterSpaceId}
@@ -3059,6 +3093,7 @@ function App() {
                       ]}
                     />
                     <TextInput
+                      data-test-id="tasks-search-input"
                       className="todo-input"
                       placeholder="Search by task title"
                       leftSection={<IconSearch size={16} />}
@@ -3163,7 +3198,7 @@ function App() {
                   <Card withBorder className="surface-card">
                     <Group justify="space-between" align="center">
                       <Text c="var(--app-subtitle)">Task not found.</Text>
-                      <Button variant="light" onClick={() => navigateTo("/tasks")}>
+                      <Button data-test-id="task-back-to-tasks-button" variant="light" onClick={() => navigateTo("/tasks")}>
                         Back to tasks
                       </Button>
                     </Group>
@@ -3207,6 +3242,7 @@ function App() {
                           <Stack gap="sm">
                             {taskTitleEditMode && taskCanWrite ? (
                               <TextInput
+                                data-test-id="task-title-input"
                                 className="todo-input"
                                 label="Title"
                                 autoFocus
@@ -3250,6 +3286,7 @@ function App() {
 
                             {taskDescriptionEditMode && taskCanWrite ? (
                               <Textarea
+                                data-test-id="task-description-input"
                                 className="todo-input"
                                 label="Description"
                                 minRows={4}
@@ -3304,6 +3341,7 @@ function App() {
                             justify={isMobile ? "flex-start" : "flex-end"}
                           >
                             <Button
+                              data-test-id="task-save-button"
                               leftSection={<IconWriting size={16} />}
                               loading={updateTaskDetailMutation.isPending}
                               disabled={
@@ -3344,6 +3382,7 @@ function App() {
                             </Button>
                             {taskCanDelete ? (
                               <Button
+                                data-test-id="task-delete-button"
                                 color="red"
                                 variant="light"
                                 onClick={() =>
@@ -3361,6 +3400,7 @@ function App() {
                           </Group>
                           <Stack gap="xs" w={isMobile ? "100%" : 260}>
                             <Select
+                              data-test-id="task-status-select"
                               className="todo-input"
                               label="Status"
                               data={taskStatusOptions}
@@ -3373,6 +3413,7 @@ function App() {
                               }}
                             />
                             <Select
+                              data-test-id="task-assignee-select"
                               className="todo-input"
                               label="Assignee"
                               value={taskDetailAssignee}
@@ -3414,6 +3455,7 @@ function App() {
         </Container>
       </AppShell.Main>
       <Modal
+        data-test-id="delete-task-modal"
         opened={Boolean(taskDeleteTarget)}
         onClose={() => setTaskDeleteTarget(null)}
         title="Delete task?"
@@ -3432,6 +3474,7 @@ function App() {
               Cancel
             </Button>
             <Button
+              data-test-id="delete-task-confirm-button"
               color="red"
               loading={deleteMutation.isPending}
               onClick={() => {
@@ -3451,6 +3494,7 @@ function App() {
         </Stack>
       </Modal>
       <Modal
+        data-test-id="delete-space-modal"
         opened={Boolean(spaceDeleteTarget)}
         onClose={() => setSpaceDeleteTarget(null)}
         title="Delete space?"
@@ -3469,6 +3513,7 @@ function App() {
               Cancel
             </Button>
             <Button
+              data-test-id="delete-space-confirm-button"
               color="red"
               loading={deleteSpaceMutation.isPending}
               onClick={() => {
@@ -3484,6 +3529,7 @@ function App() {
         </Stack>
       </Modal>
       <Modal
+        data-test-id="global-search-modal"
         opened={globalSearchOpen}
         onClose={() => {
           setGlobalSearchOpen(false);
@@ -3496,6 +3542,7 @@ function App() {
       >
         <Stack gap="sm" style={{ height: 560 }}>
           <TextInput
+            data-test-id="global-search-input"
             className="todo-input"
             placeholder="Search tasks or spaces..."
             leftSection={<IconSearch size={16} />}
@@ -3593,6 +3640,7 @@ function App() {
         </Stack>
       </Modal>
       <Modal
+        data-test-id="invite-modal"
         opened={inviteModalOpen}
         onClose={() => {
           setInviteModalOpen(false);
@@ -3605,6 +3653,7 @@ function App() {
       >
         <Stack gap="sm" style={{ height: 520 }}>
           <TextInput
+            data-test-id="invite-search-input"
             className="todo-input"
             label="Search users"
             placeholder="Type name or email (min 3 characters)"
@@ -3684,6 +3733,7 @@ function App() {
         </Stack>
       </Modal>
       <Modal
+        data-test-id="create-space-modal"
         opened={spaceModalOpen}
         onClose={() => setSpaceModalOpen(false)}
         title="Create Space"
@@ -3691,6 +3741,7 @@ function App() {
       >
         <Stack>
           <TextInput
+            data-test-id="create-space-name-input"
             label="Space name"
             placeholder="Engineering"
             value={spaceName}
@@ -3698,6 +3749,7 @@ function App() {
             className="todo-input"
           />
           <Textarea
+            data-test-id="create-space-description-input"
             label="Description"
             placeholder="What is this space for?"
             value={spaceDescription}
@@ -3706,6 +3758,7 @@ function App() {
             minRows={3}
           />
           <Button
+            data-test-id="create-space-submit-button"
             className="add-button"
             loading={createSpaceMutation.isPending}
             disabled={spaceName.trim().length < 2}
@@ -3721,6 +3774,7 @@ function App() {
         </Stack>
       </Modal>
       <Modal
+        data-test-id="add-task-modal"
         opened={taskModalOpen}
         onClose={() => setTaskModalOpen(false)}
         title="Add Task to Space"
@@ -3728,6 +3782,7 @@ function App() {
       >
         <Stack>
           <TextInput
+            data-test-id="add-task-title-input"
             label="Task title"
             placeholder="Define rollout checklist"
             className="todo-input"
@@ -3735,6 +3790,7 @@ function App() {
             onChange={(event) => setNewTaskTitle(event.currentTarget.value)}
           />
           <Textarea
+            data-test-id="add-task-description-input"
             label="Description"
             placeholder="Add context, acceptance criteria, or links"
             className="todo-input"
@@ -3743,6 +3799,7 @@ function App() {
             minRows={3}
           />
           <Select
+            data-test-id="add-task-status-select"
             className="todo-input"
             label="Status"
             data={taskStatusOptions}
@@ -3754,6 +3811,7 @@ function App() {
             }}
           />
           <Select
+            data-test-id="add-task-assignee-select"
             className="todo-input"
             label="Assignee"
             value={newTaskAssignee}
@@ -3767,6 +3825,7 @@ function App() {
             ]}
           />
           <Button
+            data-test-id="add-task-submit-button"
             disabled={!newTaskTitle.trim() || !activitySpaceId}
             loading={createTodoMutation.isPending}
             onClick={() =>
