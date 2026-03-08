@@ -85,6 +85,8 @@ jobs:
           script: |
             set -eu
             echo "${{ secrets.GHCR_READ_TOKEN }}" | docker login ghcr.io -u "${{ github.repository_owner }}" --password-stdin
+            docker image prune -af || true
+            docker builder prune -af || true
             mkdir -p /opt/todo-deploy
             cat > /opt/todo-deploy/.env.staging <<'EOF'
             APP_PORT=8081
@@ -97,6 +99,10 @@ jobs:
             docker compose --env-file .env.staging -f docker-compose.deploy.yml -p todo-staging pull
             docker compose --env-file .env.staging -f docker-compose.deploy.yml -p todo-staging up -d --remove-orphans
             docker compose --env-file .env.staging -f docker-compose.deploy.yml -p todo-staging ps
+            docker image prune -af || true
+            docker builder prune -af || true
+            docker system df || true
+            df -h || true
 
   seed_staging:
     runs-on: ubuntu-latest
@@ -256,6 +262,8 @@ jobs:
           script: |
             set -eu
             echo "${{ secrets.GHCR_READ_TOKEN }}" | docker login ghcr.io -u "${{ github.repository_owner }}" --password-stdin
+            docker image prune -af || true
+            docker builder prune -af || true
             mkdir -p /opt/todo-deploy
             cat > /opt/todo-deploy/.env.prod <<'EOF'
             APP_PORT=8080
@@ -268,3 +276,7 @@ jobs:
             docker compose --env-file .env.prod -f docker-compose.deploy.yml -p todo-prod pull
             docker compose --env-file .env.prod -f docker-compose.deploy.yml -p todo-prod up -d --remove-orphans
             docker compose --env-file .env.prod -f docker-compose.deploy.yml -p todo-prod ps
+            docker image prune -af || true
+            docker builder prune -af || true
+            docker system df || true
+            df -h || true
