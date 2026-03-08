@@ -351,16 +351,16 @@ body {
   }
 
   .top-nav-bar {
-    align-items: flex-start;
+    align-items: center;
   }
 
   .nav-links {
-    max-width: 100%;
-    width: 100%;
+    max-width: 62%;
+    width: auto;
   }
 
   .top-nav-controls {
-    width: 100%;
+    width: auto;
     justify-content: flex-end;
   }
 

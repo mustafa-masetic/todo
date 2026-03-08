@@ -1,4 +1,5 @@
 import {
+  ActionIcon,
   Anchor,
   AppShell,
   Avatar,
@@ -44,6 +45,7 @@ import {
   IconShield,
   IconSun,
   IconUserPlus,
+  IconUserCircle,
   IconUsers,
   IconWriting
 } from "@tabler/icons-react";
@@ -1481,13 +1483,13 @@ function App() {
   }, [currentPath]);
 
   return (
-    <AppShell header={{ height: isMobile ? 126 : 74 }} padding="md" className="app-shell">
+    <AppShell header={{ height: 74 }} padding="md" className="app-shell">
       <AppShell.Header className="app-header">
         <Container size="lg" h="100%">
           <Group
             justify="space-between"
             align="center"
-            wrap={isMobile ? "wrap" : "nowrap"}
+            wrap="nowrap"
             h="100%"
             className="top-nav-bar"
           >
@@ -1536,8 +1538,8 @@ function App() {
               ) : null}
             </Group>
 
-            <Group gap="xs" wrap={isMobile ? "wrap" : "nowrap"} className="top-nav-controls">
-              {meQuery.data ? (
+            <Group gap="xs" wrap="nowrap" className="top-nav-controls">
+              {meQuery.data && !isMobile ? (
                 <Button
                   variant="light"
                   className="top-nav-search-trigger"
@@ -1553,6 +1555,18 @@ function App() {
                     </Text>
                   </Group>
                 </Button>
+              ) : null}
+              {meQuery.data && isMobile ? (
+                <ActionIcon
+                  variant="light"
+                  size={36}
+                  radius="md"
+                  title="Search"
+                  aria-label="Open search"
+                  onClick={() => setGlobalSearchOpen(true)}
+                >
+                  <IconSearch size={18} />
+                </ActionIcon>
               ) : null}
               <Button
                 variant="light"
@@ -1576,18 +1590,34 @@ function App() {
               {meQuery.data ? (
                 <Menu shadow="md" width={220} position="bottom-end">
                   <Menu.Target>
-                    <Button
-                      variant="light"
-                      className="top-nav-user-button"
-                      rightSection={<IconChevronDown size={14} />}
-                      leftSection={
-                        <Avatar src={meQuery.data.avatarUrl || null} size="sm" radius="xl">
-                          {`${meQuery.data.firstName[0] || ""}${meQuery.data.lastName[0] || ""}`}
-                        </Avatar>
-                      }
-                    >
-                      {isMobile ? "Account" : meQuery.data.firstName}
-                    </Button>
+                    {isMobile ? (
+                      <ActionIcon
+                        variant="light"
+                        size={36}
+                        radius="md"
+                        title="Account menu"
+                        aria-label="Open account menu"
+                      >
+                        {meQuery.data.avatarUrl ? (
+                          <Avatar src={meQuery.data.avatarUrl} size={24} radius="xl" />
+                        ) : (
+                          <IconUserCircle size={20} />
+                        )}
+                      </ActionIcon>
+                    ) : (
+                      <Button
+                        variant="light"
+                        className="top-nav-user-button"
+                        rightSection={<IconChevronDown size={14} />}
+                        leftSection={
+                          <Avatar src={meQuery.data.avatarUrl || null} size="sm" radius="xl">
+                            {`${meQuery.data.firstName[0] || ""}${meQuery.data.lastName[0] || ""}`}
+                          </Avatar>
+                        }
+                      >
+                        {meQuery.data.firstName}
+                      </Button>
+                    )}
                   </Menu.Target>
                   <Menu.Dropdown>
                     <Menu.Label>{meQuery.data.email}</Menu.Label>
