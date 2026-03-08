@@ -98,9 +98,35 @@ jobs:
             docker compose --env-file .env.staging -f docker-compose.deploy.yml -p todo-staging up -d --remove-orphans
             docker compose --env-file .env.staging -f docker-compose.deploy.yml -p todo-staging ps
 
-  smoke_test_staging:
+  seed_staging:
     runs-on: ubuntu-latest
     needs: deploy_staging
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.6.2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Seed staging test data
+        env:
+          SEED_API_BASE_URL: http://${{ secrets.VPS_HOST }}:8081
+        run: pnpm run seed:data
+
+  smoke_test_staging:
+    runs-on: ubuntu-latest
+    needs: seed_staging
     steps:
       - name: Run staging smoke tests on server
         uses: appleboy/ssh-action@v1.0.3

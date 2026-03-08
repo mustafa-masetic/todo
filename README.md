@@ -67,8 +67,9 @@ This repo includes a GitHub Actions pipeline at `.github/workflows/deploy.yml`:
 
 1. Build and push images to GHCR (`todo-server`, `todo-client`) tagged by commit SHA.
 2. Deploy the same tag to staging (`todo-staging`) on port `8081`.
-3. Run smoke tests against staging (`/` and `/api/spaces`).
-4. Deploy the same validated tag to production (`todo-prod`) on port `8080`.
+3. Seed staging data by running `pnpm run seed:data` against staging API.
+4. Run smoke tests against staging (`/` and `/api/spaces`).
+5. Deploy the same validated tag to production (`todo-prod`) on port `8080`.
 
 Deploy compose template: `infra/deploy/docker-compose.deploy.yml`.
 
