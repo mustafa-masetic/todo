@@ -60,3 +60,23 @@ export JWT_SECRET="replace-with-a-strong-secret"
 - `pnpm dev` - run client and server together
 - `pnpm build` - build both apps
 - `pnpm start` - run compiled server
+
+## CI/CD staging -> production
+
+This repo includes a GitHub Actions pipeline at `.github/workflows/deploy.yml`:
+
+1. Build and push images to GHCR (`todo-server`, `todo-client`) tagged by commit SHA.
+2. Deploy the same tag to staging (`todo-staging`) on port `8081`.
+3. Run smoke tests against staging (`/` and `/api/spaces`).
+4. Deploy the same validated tag to production (`todo-prod`) on port `8080`.
+
+Deploy compose template: `infra/deploy/docker-compose.deploy.yml`.
+
+Required GitHub repository secrets:
+
+- `VPS_HOST`
+- `VPS_USER`
+- `VPS_SSH_KEY`
+- `GHCR_READ_TOKEN`
+- `STAGING_JWT_SECRET`
+- `PROD_JWT_SECRET`

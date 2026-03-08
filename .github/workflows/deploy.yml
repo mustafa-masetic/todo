@@ -1,0 +1,168 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: deploy-main
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      server_image: ${{ steps.meta.outputs.server_image }}
+      client_image: ${{ steps.meta.outputs.client_image }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set image names
+        id: meta
+        run: |
+          OWNER_LC="$(echo "${GITHUB_REPOSITORY_OWNER}" | tr '[:upper:]' '[:lower:]')"
+          SERVER_IMAGE="ghcr.io/${OWNER_LC}/todo-server:${GITHUB_SHA}"
+          CLIENT_IMAGE="ghcr.io/${OWNER_LC}/todo-client:${GITHUB_SHA}"
+          echo "server_image=${SERVER_IMAGE}" >> "${GITHUB_OUTPUT}"
+          echo "client_image=${CLIENT_IMAGE}" >> "${GITHUB_OUTPUT}"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push server image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile.server
+          push: true
+          tags: ${{ steps.meta.outputs.server_image }}
+
+      - name: Build and push client image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile.client
+          push: true
+          tags: ${{ steps.meta.outputs.client_image }}
+
+  deploy_staging:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Copy deploy compose file to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          source: "infra/deploy/docker-compose.deploy.yml"
+          target: "/opt/todo-deploy"
+          strip_components: 2
+
+      - name: Deploy staging stack
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            set -eu
+            echo "${{ secrets.GHCR_READ_TOKEN }}" | docker login ghcr.io -u "${{ github.repository_owner }}" --password-stdin
+            mkdir -p /opt/todo-deploy
+            cat > /opt/todo-deploy/.env.staging <<'EOF'
+            APP_PORT=8081
+            SERVER_PORT=3000
+            JWT_SECRET=${{ secrets.STAGING_JWT_SECRET }}
+            SERVER_IMAGE=${{ needs.build.outputs.server_image }}
+            CLIENT_IMAGE=${{ needs.build.outputs.client_image }}
+            EOF
+            cd /opt/todo-deploy
+            docker compose --env-file .env.staging -f docker-compose.deploy.yml -p todo-staging pull
+            docker compose --env-file .env.staging -f docker-compose.deploy.yml -p todo-staging up -d --remove-orphans
+            docker compose --env-file .env.staging -f docker-compose.deploy.yml -p todo-staging ps
+
+  smoke_test_staging:
+    runs-on: ubuntu-latest
+    needs: deploy_staging
+    steps:
+      - name: Run staging smoke tests on server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            set -eu
+            CLIENT_CODE="$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8081/ || true)"
+            if [ "${CLIENT_CODE}" != "200" ]; then
+              echo "Staging client failed with HTTP ${CLIENT_CODE}"
+              exit 1
+            fi
+
+            API_CODE="$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8081/api/spaces || true)"
+            if [ "${API_CODE}" = "000" ]; then
+              echo "Staging API did not respond"
+              exit 1
+            fi
+            if [ "${API_CODE}" -ge 500 ]; then
+              echo "Staging API failed with HTTP ${API_CODE}"
+              exit 1
+            fi
+
+  deploy_prod:
+    runs-on: ubuntu-latest
+    needs:
+      - build
+      - smoke_test_staging
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Copy deploy compose file to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          source: "infra/deploy/docker-compose.deploy.yml"
+          target: "/opt/todo-deploy"
+          strip_components: 2
+
+      - name: Deploy production stack
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            set -eu
+            echo "${{ secrets.GHCR_READ_TOKEN }}" | docker login ghcr.io -u "${{ github.repository_owner }}" --password-stdin
+            mkdir -p /opt/todo-deploy
+            cat > /opt/todo-deploy/.env.prod <<'EOF'
+            APP_PORT=8080
+            SERVER_PORT=3000
+            JWT_SECRET=${{ secrets.PROD_JWT_SECRET }}
+            SERVER_IMAGE=${{ needs.build.outputs.server_image }}
+            CLIENT_IMAGE=${{ needs.build.outputs.client_image }}
+            EOF
+            cd /opt/todo-deploy
+            docker compose --env-file .env.prod -f docker-compose.deploy.yml -p todo-prod pull
+            docker compose --env-file .env.prod -f docker-compose.deploy.yml -p todo-prod up -d --remove-orphans
+            docker compose --env-file .env.prod -f docker-compose.deploy.yml -p todo-prod ps
