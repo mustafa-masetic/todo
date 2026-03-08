@@ -193,7 +193,7 @@ jobs:
                 <p>The test run failed before generating an HTML report.</p>
               </body>
             </html>
-EOF
+            EOF
           fi
 
       - name: Upload Playwright report
