@@ -39,11 +39,13 @@ import {
   IconChevronDown,
   IconLogout,
   IconMoon,
+  IconPencil,
   IconPlus,
   IconSearch,
   IconSettings,
   IconShield,
   IconSun,
+  IconTrash,
   IconUserPlus,
   IconUserCircle,
   IconUsers,
@@ -106,6 +108,7 @@ import type {
 type AuthMode = "login" | "register";
 
 const SELECTED_SPACE_KEY = "todo-flow-selected-space";
+const ADMIN_ITEMS_PER_PAGE = 10;
 
 function slugifySpaceName(name: string): string {
   return name
@@ -231,6 +234,9 @@ function App() {
   const [adminUsersSearch, setAdminUsersSearch] = useState("");
   const [adminSpacesSearch, setAdminSpacesSearch] = useState("");
   const [adminTasksSearch, setAdminTasksSearch] = useState("");
+  const [adminUsersPage, setAdminUsersPage] = useState(1);
+  const [adminSpacesPage, setAdminSpacesPage] = useState(1);
+  const [adminTasksPage, setAdminTasksPage] = useState(1);
   const [selectedAdminUserIds, setSelectedAdminUserIds] = useState<number[]>([]);
   const [selectedAdminSpaceIds, setSelectedAdminSpaceIds] = useState<number[]>([]);
   const [selectedAdminTaskIds, setSelectedAdminTaskIds] = useState<number[]>([]);
@@ -1309,6 +1315,60 @@ function App() {
         .includes(q)
     );
   }, [adminTasksQuery.data, adminTasksSearch]);
+  const totalAdminUserPages = Math.max(
+    1,
+    Math.ceil(filteredAdminUsers.length / ADMIN_ITEMS_PER_PAGE)
+  );
+  const pagedAdminUsers = useMemo(() => {
+    const offset = (adminUsersPage - 1) * ADMIN_ITEMS_PER_PAGE;
+    return filteredAdminUsers.slice(offset, offset + ADMIN_ITEMS_PER_PAGE);
+  }, [adminUsersPage, filteredAdminUsers]);
+  const totalAdminSpacePages = Math.max(
+    1,
+    Math.ceil(filteredAdminSpaces.length / ADMIN_ITEMS_PER_PAGE)
+  );
+  const pagedAdminSpaces = useMemo(() => {
+    const offset = (adminSpacesPage - 1) * ADMIN_ITEMS_PER_PAGE;
+    return filteredAdminSpaces.slice(offset, offset + ADMIN_ITEMS_PER_PAGE);
+  }, [adminSpacesPage, filteredAdminSpaces]);
+  const totalAdminTaskPages = Math.max(
+    1,
+    Math.ceil(filteredAdminTasks.length / ADMIN_ITEMS_PER_PAGE)
+  );
+  const pagedAdminTasks = useMemo(() => {
+    const offset = (adminTasksPage - 1) * ADMIN_ITEMS_PER_PAGE;
+    return filteredAdminTasks.slice(offset, offset + ADMIN_ITEMS_PER_PAGE);
+  }, [adminTasksPage, filteredAdminTasks]);
+
+  useEffect(() => {
+    setAdminUsersPage(1);
+  }, [adminUsersSearch]);
+
+  useEffect(() => {
+    setAdminSpacesPage(1);
+  }, [adminSpacesSearch]);
+
+  useEffect(() => {
+    setAdminTasksPage(1);
+  }, [adminTasksSearch]);
+
+  useEffect(() => {
+    if (adminUsersPage > totalAdminUserPages) {
+      setAdminUsersPage(totalAdminUserPages);
+    }
+  }, [adminUsersPage, totalAdminUserPages]);
+
+  useEffect(() => {
+    if (adminSpacesPage > totalAdminSpacePages) {
+      setAdminSpacesPage(totalAdminSpacePages);
+    }
+  }, [adminSpacesPage, totalAdminSpacePages]);
+
+  useEffect(() => {
+    if (adminTasksPage > totalAdminTaskPages) {
+      setAdminTasksPage(totalAdminTaskPages);
+    }
+  }, [adminTasksPage, totalAdminTaskPages]);
 
   useEffect(() => {
     if (spacesPage > totalSpacePages) {
@@ -2127,34 +2187,6 @@ function App() {
                             <Group gap="xs">
                               <Button
                                 size="xs"
-                                variant="light"
-                                disabled={selectedAdminUserIds.length === 0}
-                                loading={adminBulkUsersMutation.isPending}
-                                onClick={() =>
-                                  adminBulkUsersMutation.mutate({
-                                    action: "set-admin",
-                                    userIds: selectedAdminUserIds
-                                  })
-                                }
-                              >
-                                Set admin
-                              </Button>
-                              <Button
-                                size="xs"
-                                variant="light"
-                                disabled={selectedAdminUserIds.length === 0}
-                                loading={adminBulkUsersMutation.isPending}
-                                onClick={() =>
-                                  adminBulkUsersMutation.mutate({
-                                    action: "unset-admin",
-                                    userIds: selectedAdminUserIds
-                                  })
-                                }
-                              >
-                                Unset admin
-                              </Button>
-                              <Button
-                                size="xs"
                                 color="red"
                                 variant="light"
                                 disabled={selectedAdminUserIds.length === 0}
@@ -2170,40 +2202,46 @@ function App() {
                               </Button>
                             </Group>
                           </Group>
-                          <Table.ScrollContainer minWidth={980}>
+                          <Table.ScrollContainer minWidth={760}>
                             <Table striped highlightOnHover withTableBorder withColumnBorders>
                             <Table.Thead>
                               <Table.Tr>
                                 <Table.Th>
                                   <Checkbox
                                     checked={
-                                      filteredAdminUsers.length > 0 &&
-                                      filteredAdminUsers.every((user) =>
+                                      pagedAdminUsers.length > 0 &&
+                                      pagedAdminUsers.every((user) =>
                                         selectedAdminUserIds.includes(user.id)
                                       )
                                     }
                                     onChange={(event) => {
                                       if (event.currentTarget.checked) {
                                         setSelectedAdminUserIds(
-                                          filteredAdminUsers.map((user) => user.id)
+                                          Array.from(
+                                            new Set([
+                                              ...selectedAdminUserIds,
+                                              ...pagedAdminUsers.map((user) => user.id)
+                                            ])
+                                          )
                                         );
                                         return;
                                       }
-                                      setSelectedAdminUserIds([]);
+                                      setSelectedAdminUserIds((prev) =>
+                                        prev.filter(
+                                          (id) => !pagedAdminUsers.some((user) => user.id === id)
+                                        )
+                                      );
                                     }}
                                   />
                                 </Table.Th>
-                                <Table.Th>ID</Table.Th>
                                 <Table.Th>Name</Table.Th>
                                 <Table.Th>Email</Table.Th>
                                 <Table.Th>Admin</Table.Th>
-                                <Table.Th>Owned spaces</Table.Th>
-                                <Table.Th>Created tasks</Table.Th>
                                 <Table.Th>Actions</Table.Th>
                               </Table.Tr>
                             </Table.Thead>
                             <Table.Tbody>
-                              {filteredAdminUsers.map((user) => (
+                              {pagedAdminUsers.map((user) => (
                                 <Table.Tr key={user.id}>
                                   <Table.Td>
                                     <Checkbox
@@ -2217,7 +2255,6 @@ function App() {
                                       }}
                                     />
                                   </Table.Td>
-                                  <Table.Td>{user.id}</Table.Td>
                                   <Table.Td>{`${user.firstName} ${user.lastName}`.trim()}</Table.Td>
                                   <Table.Td>{user.email}</Table.Td>
                                   <Table.Td>
@@ -2225,10 +2262,39 @@ function App() {
                                       {user.isAdmin ? "yes" : "no"}
                                     </Badge>
                                   </Table.Td>
-                                  <Table.Td>{user.ownedSpaceCount}</Table.Td>
-                                  <Table.Td>{user.createdTaskCount}</Table.Td>
                                   <Table.Td>
-                                    <Group gap={6} wrap="nowrap">
+                                    <Group gap={6} wrap="wrap">
+                                      <Button
+                                        size="xs"
+                                        variant="light"
+                                        leftSection={<IconPencil size={14} />}
+                                        loading={updateAdminUserMutation.isPending}
+                                        onClick={() => {
+                                          const nextFirstName = window.prompt(
+                                            "First name",
+                                            user.firstName
+                                          );
+                                          if (!nextFirstName || nextFirstName.trim().length < 2) {
+                                            return;
+                                          }
+                                          const nextLastName = window.prompt(
+                                            "Last name",
+                                            user.lastName
+                                          );
+                                          if (!nextLastName || nextLastName.trim().length < 2) {
+                                            return;
+                                          }
+                                          updateAdminUserMutation.mutate({
+                                            userId: user.id,
+                                            payload: {
+                                              firstName: nextFirstName.trim(),
+                                              lastName: nextLastName.trim()
+                                            }
+                                          });
+                                        }}
+                                      >
+                                        Edit
+                                      </Button>
                                       <Button
                                         size="xs"
                                         variant="light"
@@ -2242,25 +2308,24 @@ function App() {
                                       >
                                         {user.isAdmin ? "Unset admin" : "Set admin"}
                                       </Button>
-                                      <TextInput
-                                        size="xs"
-                                        placeholder="New password"
-                                        value={adminResetPasswordByUserId[user.id] ?? ""}
-                                        onChange={(event) =>
-                                          setAdminResetPasswordByUserId((prev) => ({
-                                            ...prev,
-                                            [user.id]: event.currentTarget.value
-                                          }))
-                                        }
-                                      />
                                       <Button
                                         size="xs"
                                         variant="light"
                                         loading={resetAdminPasswordMutation.isPending}
                                         onClick={() => {
-                                          const value =
-                                            adminResetPasswordByUserId[user.id] ?? "";
-                                          if (value.length < 8) {
+                                          const value = window.prompt(
+                                            "New password",
+                                            adminResetPasswordByUserId[user.id] ?? ""
+                                          );
+                                          if (value == null) {
+                                            return;
+                                          }
+                                          const trimmedValue = value.trim();
+                                          setAdminResetPasswordByUserId((prev) => ({
+                                            ...prev,
+                                            [user.id]: trimmedValue
+                                          }));
+                                          if (trimmedValue.length < 8) {
                                             notifications.show({
                                               color: "red",
                                               title: "Validation failed",
@@ -2270,11 +2335,26 @@ function App() {
                                           }
                                           resetAdminPasswordMutation.mutate({
                                             userId: user.id,
-                                            newPassword: value
+                                            newPassword: trimmedValue
                                           });
                                         }}
                                       >
                                         Reset password
+                                      </Button>
+                                      <Button
+                                        size="xs"
+                                        color="red"
+                                        variant="light"
+                                        leftSection={<IconTrash size={14} />}
+                                        loading={adminBulkUsersMutation.isPending}
+                                        onClick={() =>
+                                          adminBulkUsersMutation.mutate({
+                                            action: "delete",
+                                            userIds: [user.id]
+                                          })
+                                        }
+                                      >
+                                        Delete
                                       </Button>
                                     </Group>
                                   </Table.Td>
@@ -2283,6 +2363,20 @@ function App() {
                             </Table.Tbody>
                             </Table>
                           </Table.ScrollContainer>
+                          {filteredAdminUsers.length === 0 ? (
+                            <Text size="sm" c="var(--app-subtitle)">
+                              No matching users found.
+                            </Text>
+                          ) : null}
+                          {filteredAdminUsers.length > ADMIN_ITEMS_PER_PAGE ? (
+                            <Group justify="center">
+                              <Pagination
+                                value={adminUsersPage}
+                                onChange={setAdminUsersPage}
+                                total={totalAdminUserPages}
+                              />
+                            </Group>
+                          ) : null}
                         </Stack>
                       </Tabs.Panel>
 
@@ -2313,39 +2407,46 @@ function App() {
                               Delete selected
                             </Button>
                           </Group>
-                          <Table.ScrollContainer minWidth={920}>
+                          <Table.ScrollContainer minWidth={720}>
                             <Table striped highlightOnHover withTableBorder withColumnBorders>
                             <Table.Thead>
                               <Table.Tr>
                                 <Table.Th>
                                   <Checkbox
                                     checked={
-                                      filteredAdminSpaces.length > 0 &&
-                                      filteredAdminSpaces.every((space) =>
+                                      pagedAdminSpaces.length > 0 &&
+                                      pagedAdminSpaces.every((space) =>
                                         selectedAdminSpaceIds.includes(space.id)
                                       )
                                     }
                                     onChange={(event) => {
                                       if (event.currentTarget.checked) {
                                         setSelectedAdminSpaceIds(
-                                          filteredAdminSpaces.map((space) => space.id)
+                                          Array.from(
+                                            new Set([
+                                              ...selectedAdminSpaceIds,
+                                              ...pagedAdminSpaces.map((space) => space.id)
+                                            ])
+                                          )
                                         );
                                         return;
                                       }
-                                      setSelectedAdminSpaceIds([]);
+                                      setSelectedAdminSpaceIds((prev) =>
+                                        prev.filter(
+                                          (id) => !pagedAdminSpaces.some((space) => space.id === id)
+                                        )
+                                      );
                                     }}
                                   />
                                 </Table.Th>
-                                <Table.Th>ID</Table.Th>
                                 <Table.Th>Name</Table.Th>
                                 <Table.Th>Owner</Table.Th>
-                                <Table.Th>Members</Table.Th>
                                 <Table.Th>Tasks</Table.Th>
                                 <Table.Th>Actions</Table.Th>
                               </Table.Tr>
                             </Table.Thead>
                             <Table.Tbody>
-                              {filteredAdminSpaces.map((space) => (
+                              {pagedAdminSpaces.map((space) => (
                                 <Table.Tr key={space.id}>
                                   <Table.Td>
                                     <Checkbox
@@ -2359,16 +2460,15 @@ function App() {
                                       }}
                                     />
                                   </Table.Td>
-                                  <Table.Td>{space.id}</Table.Td>
                                   <Table.Td>{space.name}</Table.Td>
                                   <Table.Td>{space.ownerEmail}</Table.Td>
-                                  <Table.Td>{space.memberCount}</Table.Td>
                                   <Table.Td>{space.totalTaskCount}</Table.Td>
                                   <Table.Td>
                                     <Group gap={6} wrap="nowrap">
                                       <Button
                                         size="xs"
                                         variant="light"
+                                        leftSection={<IconPencil size={14} />}
                                         loading={updateAdminSpaceMutation.isPending}
                                         onClick={() => {
                                           const nextName = window.prompt("Space name", space.name);
@@ -2392,6 +2492,7 @@ function App() {
                                         size="xs"
                                         color="red"
                                         variant="light"
+                                        leftSection={<IconTrash size={14} />}
                                         loading={deleteAdminSpaceMutation.isPending}
                                         onClick={() => deleteAdminSpaceMutation.mutate(space.id)}
                                       >
@@ -2404,6 +2505,20 @@ function App() {
                             </Table.Tbody>
                             </Table>
                           </Table.ScrollContainer>
+                          {filteredAdminSpaces.length === 0 ? (
+                            <Text size="sm" c="var(--app-subtitle)">
+                              No matching spaces found.
+                            </Text>
+                          ) : null}
+                          {filteredAdminSpaces.length > ADMIN_ITEMS_PER_PAGE ? (
+                            <Group justify="center">
+                              <Pagination
+                                value={adminSpacesPage}
+                                onChange={setAdminSpacesPage}
+                                total={totalAdminSpacePages}
+                              />
+                            </Group>
+                          ) : null}
                         </Stack>
                       </Tabs.Panel>
 
@@ -2459,39 +2574,46 @@ function App() {
                               </Button>
                             </Group>
                           </Group>
-                          <Table.ScrollContainer minWidth={920}>
+                          <Table.ScrollContainer minWidth={780}>
                             <Table striped highlightOnHover withTableBorder withColumnBorders>
                             <Table.Thead>
                               <Table.Tr>
                                 <Table.Th>
                                   <Checkbox
                                     checked={
-                                      filteredAdminTasks.length > 0 &&
-                                      filteredAdminTasks.every((task) =>
+                                      pagedAdminTasks.length > 0 &&
+                                      pagedAdminTasks.every((task) =>
                                         selectedAdminTaskIds.includes(task.id)
                                       )
                                     }
                                     onChange={(event) => {
                                       if (event.currentTarget.checked) {
                                         setSelectedAdminTaskIds(
-                                          filteredAdminTasks.map((task) => task.id)
+                                          Array.from(
+                                            new Set([
+                                              ...selectedAdminTaskIds,
+                                              ...pagedAdminTasks.map((task) => task.id)
+                                            ])
+                                          )
                                         );
                                         return;
                                       }
-                                      setSelectedAdminTaskIds([]);
+                                      setSelectedAdminTaskIds((prev) =>
+                                        prev.filter(
+                                          (id) => !pagedAdminTasks.some((task) => task.id === id)
+                                        )
+                                      );
                                     }}
                                   />
                                 </Table.Th>
-                                <Table.Th>ID</Table.Th>
                                 <Table.Th>Title</Table.Th>
                                 <Table.Th>Space</Table.Th>
-                                <Table.Th>Creator</Table.Th>
                                 <Table.Th>Status</Table.Th>
                                 <Table.Th>Actions</Table.Th>
                               </Table.Tr>
                             </Table.Thead>
                             <Table.Tbody>
-                              {filteredAdminTasks.map((task) => (
+                              {pagedAdminTasks.map((task) => (
                                 <Table.Tr key={task.id}>
                                   <Table.Td>
                                     <Checkbox
@@ -2505,17 +2627,33 @@ function App() {
                                       }}
                                     />
                                   </Table.Td>
-                                  <Table.Td>{task.id}</Table.Td>
                                   <Table.Td>{task.title}</Table.Td>
                                   <Table.Td>{task.spaceName}</Table.Td>
-                                  <Table.Td>{task.creatorEmail}</Table.Td>
                                   <Table.Td>
                                     <Badge variant="light" color={taskStatusMeta[task.status].color}>
                                       {taskStatusMeta[task.status].label}
                                     </Badge>
                                   </Table.Td>
                                   <Table.Td>
-                                    <Group gap={6} wrap="nowrap">
+                                    <Group gap={6} wrap="wrap">
+                                      <Button
+                                        size="xs"
+                                        variant="light"
+                                        leftSection={<IconPencil size={14} />}
+                                        loading={updateAdminTaskMutation.isPending}
+                                        onClick={() => {
+                                          const nextTitle = window.prompt("Task title", task.title);
+                                          if (!nextTitle || nextTitle.trim().length < 2) {
+                                            return;
+                                          }
+                                          updateAdminTaskMutation.mutate({
+                                            taskId: task.id,
+                                            payload: { title: nextTitle.trim() }
+                                          });
+                                        }}
+                                      >
+                                        Edit
+                                      </Button>
                                       <Select
                                         size="xs"
                                         value={task.status}
@@ -2534,6 +2672,7 @@ function App() {
                                         size="xs"
                                         color="red"
                                         variant="light"
+                                        leftSection={<IconTrash size={14} />}
                                         loading={deleteAdminTaskMutation.isPending}
                                         onClick={() => deleteAdminTaskMutation.mutate(task.id)}
                                       >
@@ -2546,6 +2685,20 @@ function App() {
                             </Table.Tbody>
                             </Table>
                           </Table.ScrollContainer>
+                          {filteredAdminTasks.length === 0 ? (
+                            <Text size="sm" c="var(--app-subtitle)">
+                              No matching tasks found.
+                            </Text>
+                          ) : null}
+                          {filteredAdminTasks.length > ADMIN_ITEMS_PER_PAGE ? (
+                            <Group justify="center">
+                              <Pagination
+                                value={adminTasksPage}
+                                onChange={setAdminTasksPage}
+                                total={totalAdminTaskPages}
+                              />
+                            </Group>
+                          ) : null}
                         </Stack>
                       </Tabs.Panel>
                     </Tabs>
