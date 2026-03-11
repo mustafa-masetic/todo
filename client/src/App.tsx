@@ -39,11 +39,14 @@ import {
   IconChevronDown,
   IconLogout,
   IconMoon,
+  IconKey,
   IconPencil,
   IconPlus,
   IconSearch,
   IconSettings,
   IconShield,
+  IconShieldCheck,
+  IconShieldX,
   IconSun,
   IconTrash,
   IconUserPlus,
@@ -244,6 +247,12 @@ function App() {
   const [adminResetPasswordByUserId, setAdminResetPasswordByUserId] = useState<
     Record<number, string>
   >({});
+  const [adminUserEditTarget, setAdminUserEditTarget] = useState<{
+    userId: number;
+    email: string;
+    firstName: string;
+    lastName: string;
+  } | null>(null);
   const [taskDetailTitle, setTaskDetailTitle] = useState("");
   const [taskDetailDescription, setTaskDetailDescription] = useState("");
   const [taskDetailStatus, setTaskDetailStatus] = useState<TaskStatus>("created");
@@ -259,6 +268,39 @@ function App() {
   const [spaceDeleteTarget, setSpaceDeleteTarget] = useState<{
     spaceId: number;
     spaceName: string;
+  } | null>(null);
+  const [adminUserDeleteTarget, setAdminUserDeleteTarget] = useState<{
+    userIds: number[];
+    label: string;
+  } | null>(null);
+  const [adminUserRoleTarget, setAdminUserRoleTarget] = useState<{
+    userId: number;
+    label: string;
+    nextIsAdmin: boolean;
+  } | null>(null);
+  const [adminUserPasswordTarget, setAdminUserPasswordTarget] = useState<{
+    userId: number;
+    label: string;
+    password: string;
+  } | null>(null);
+  const [adminSpaceEditTarget, setAdminSpaceEditTarget] = useState<{
+    spaceId: number;
+    name: string;
+    description: string;
+  } | null>(null);
+  const [adminTaskEditTarget, setAdminTaskEditTarget] = useState<{
+    taskId: number;
+    title: string;
+    description: string;
+    status: TaskStatus;
+  } | null>(null);
+  const [adminSpaceDeleteTarget, setAdminSpaceDeleteTarget] = useState<{
+    spaceIds: number[];
+    label: string;
+  } | null>(null);
+  const [adminTaskDeleteTarget, setAdminTaskDeleteTarget] = useState<{
+    taskIds: number[];
+    label: string;
   } | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const isMobile = useMediaQuery("(max-width: 48em)");
@@ -909,6 +951,8 @@ function App() {
       };
     }) => updateAdminUser(userId, payload),
     onSuccess: () => {
+      setAdminUserEditTarget(null);
+      setAdminUserRoleTarget(null);
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
       queryClient.invalidateQueries({ queryKey: ["me"] });
     },
@@ -925,6 +969,7 @@ function App() {
     mutationFn: ({ userId, newPassword }: { userId: number; newPassword: string }) =>
       resetAdminUserPassword(userId, newPassword),
     onSuccess: () => {
+      setAdminUserPasswordTarget(null);
       notifications.show({
         color: "teal",
         title: "Password reset",
@@ -945,6 +990,7 @@ function App() {
     mutationFn: adminBulkUsers,
     onSuccess: () => {
       setSelectedAdminUserIds([]);
+      setAdminUserDeleteTarget(null);
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
       queryClient.invalidateQueries({ queryKey: ["admin-overview"] });
       queryClient.invalidateQueries({ queryKey: ["me"] });
@@ -955,6 +1001,7 @@ function App() {
     mutationFn: ({ spaceId, name, description }: { spaceId: number; name: string; description: string }) =>
       updateAdminSpace(spaceId, { name, description }),
     onSuccess: () => {
+      setAdminSpaceEditTarget(null);
       queryClient.invalidateQueries({ queryKey: ["admin-spaces"] });
       queryClient.invalidateQueries({ queryKey: ["spaces"] });
     },
@@ -970,6 +1017,7 @@ function App() {
   const deleteAdminSpaceMutation = useMutation({
     mutationFn: (spaceId: number) => deleteAdminSpace(spaceId),
     onSuccess: () => {
+      setAdminSpaceDeleteTarget(null);
       queryClient.invalidateQueries({ queryKey: ["admin-spaces"] });
       queryClient.invalidateQueries({ queryKey: ["admin-overview"] });
       queryClient.invalidateQueries({ queryKey: ["spaces"] });
@@ -981,6 +1029,7 @@ function App() {
     mutationFn: adminBulkSpaces,
     onSuccess: () => {
       setSelectedAdminSpaceIds([]);
+      setAdminSpaceDeleteTarget(null);
       queryClient.invalidateQueries({ queryKey: ["admin-spaces"] });
       queryClient.invalidateQueries({ queryKey: ["admin-overview"] });
       queryClient.invalidateQueries({ queryKey: ["spaces"] });
@@ -1002,6 +1051,7 @@ function App() {
       };
     }) => updateAdminTask(taskId, payload),
     onSuccess: () => {
+      setAdminTaskEditTarget(null);
       queryClient.invalidateQueries({ queryKey: ["admin-tasks"] });
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
     }
@@ -1010,6 +1060,7 @@ function App() {
   const deleteAdminTaskMutation = useMutation({
     mutationFn: (taskId: number) => deleteAdminTask(taskId),
     onSuccess: () => {
+      setAdminTaskDeleteTarget(null);
       queryClient.invalidateQueries({ queryKey: ["admin-tasks"] });
       queryClient.invalidateQueries({ queryKey: ["admin-overview"] });
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
@@ -1020,6 +1071,7 @@ function App() {
     mutationFn: adminBulkTasks,
     onSuccess: () => {
       setSelectedAdminTaskIds([]);
+      setAdminTaskDeleteTarget(null);
       queryClient.invalidateQueries({ queryKey: ["admin-tasks"] });
       queryClient.invalidateQueries({ queryKey: ["admin-overview"] });
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
@@ -2175,33 +2227,13 @@ function App() {
 
                       <Tabs.Panel value="users" pt="md">
                         <Stack gap="sm">
-                          <Group justify="space-between" align="center">
-                            <TextInput
-                              className="todo-input"
-                              placeholder="Search users..."
-                              leftSection={<IconSearch size={16} />}
-                              value={adminUsersSearch}
-                              onChange={(event) => setAdminUsersSearch(event.currentTarget.value)}
-                              style={{ flex: 1 }}
-                            />
-                            <Group gap="xs">
-                              <Button
-                                size="xs"
-                                color="red"
-                                variant="light"
-                                disabled={selectedAdminUserIds.length === 0}
-                                loading={adminBulkUsersMutation.isPending}
-                                onClick={() =>
-                                  adminBulkUsersMutation.mutate({
-                                    action: "delete",
-                                    userIds: selectedAdminUserIds
-                                  })
-                                }
-                              >
-                                Delete selected
-                              </Button>
-                            </Group>
-                          </Group>
+                          <TextInput
+                            className="todo-input"
+                            placeholder="Search users..."
+                            leftSection={<IconSearch size={16} />}
+                            value={adminUsersSearch}
+                            onChange={(event) => setAdminUsersSearch(event.currentTarget.value)}
+                          />
                           <Table.ScrollContainer minWidth={760}>
                             <Table striped highlightOnHover withTableBorder withColumnBorders>
                             <Table.Thead>
@@ -2237,13 +2269,13 @@ function App() {
                                 <Table.Th>Name</Table.Th>
                                 <Table.Th>Email</Table.Th>
                                 <Table.Th>Admin</Table.Th>
-                                <Table.Th>Actions</Table.Th>
+                                <Table.Th ta="center">Actions</Table.Th>
                               </Table.Tr>
                             </Table.Thead>
                             <Table.Tbody>
                               {pagedAdminUsers.map((user) => (
                                 <Table.Tr key={user.id}>
-                                  <Table.Td>
+                                  <Table.Td ta="center">
                                     <Checkbox
                                       checked={selectedAdminUserIds.includes(user.id)}
                                       onChange={(event) => {
@@ -2263,99 +2295,92 @@ function App() {
                                     </Badge>
                                   </Table.Td>
                                   <Table.Td>
-                                    <Group gap={6} wrap="wrap">
-                                      <Button
-                                        size="xs"
-                                        variant="light"
-                                        leftSection={<IconPencil size={14} />}
-                                        loading={updateAdminUserMutation.isPending}
-                                        onClick={() => {
-                                          const nextFirstName = window.prompt(
-                                            "First name",
-                                            user.firstName
-                                          );
-                                          if (!nextFirstName || nextFirstName.trim().length < 2) {
-                                            return;
+                                    <Group gap={4} wrap="nowrap" justify="center">
+                                      <Tooltip label="Edit user" openDelay={150}>
+                                        <ActionIcon
+                                          size="sm"
+                                          variant="subtle"
+                                          color="cyan"
+                                          aria-label="Edit user"
+                                          loading={updateAdminUserMutation.isPending}
+                                          onClick={() =>
+                                            setAdminUserEditTarget({
+                                              userId: user.id,
+                                              email: user.email,
+                                              firstName: user.firstName,
+                                              lastName: user.lastName
+                                            })
                                           }
-                                          const nextLastName = window.prompt(
-                                            "Last name",
-                                            user.lastName
-                                          );
-                                          if (!nextLastName || nextLastName.trim().length < 2) {
-                                            return;
+                                        >
+                                          <IconPencil size={15} />
+                                        </ActionIcon>
+                                      </Tooltip>
+                                      <Tooltip
+                                        label={user.isAdmin ? "Unset admin" : "Set admin"}
+                                        openDelay={150}
+                                      >
+                                        <ActionIcon
+                                          size="sm"
+                                          variant="subtle"
+                                          color={user.isAdmin ? "orange" : "cyan"}
+                                          aria-label={user.isAdmin ? "Unset admin" : "Set admin"}
+                                          loading={updateAdminUserMutation.isPending}
+                                          onClick={() =>
+                                            setAdminUserRoleTarget({
+                                              userId: user.id,
+                                              label:
+                                                `${user.firstName} ${user.lastName}`.trim() ||
+                                                user.email,
+                                              nextIsAdmin: user.isAdmin !== 1
+                                            })
                                           }
-                                          updateAdminUserMutation.mutate({
-                                            userId: user.id,
-                                            payload: {
-                                              firstName: nextFirstName.trim(),
-                                              lastName: nextLastName.trim()
-                                            }
-                                          });
-                                        }}
-                                      >
-                                        Edit
-                                      </Button>
-                                      <Button
-                                        size="xs"
-                                        variant="light"
-                                        loading={updateAdminUserMutation.isPending}
-                                        onClick={() =>
-                                          updateAdminUserMutation.mutate({
-                                            userId: user.id,
-                                            payload: { isAdmin: user.isAdmin !== 1 }
-                                          })
-                                        }
-                                      >
-                                        {user.isAdmin ? "Unset admin" : "Set admin"}
-                                      </Button>
-                                      <Button
-                                        size="xs"
-                                        variant="light"
-                                        loading={resetAdminPasswordMutation.isPending}
-                                        onClick={() => {
-                                          const value = window.prompt(
-                                            "New password",
-                                            adminResetPasswordByUserId[user.id] ?? ""
-                                          );
-                                          if (value == null) {
-                                            return;
+                                        >
+                                          {user.isAdmin ? (
+                                            <IconShieldX size={15} />
+                                          ) : (
+                                            <IconShieldCheck size={15} />
+                                          )}
+                                        </ActionIcon>
+                                      </Tooltip>
+                                      <Tooltip label="Reset password" openDelay={150}>
+                                        <ActionIcon
+                                          size="sm"
+                                          variant="subtle"
+                                          color="yellow"
+                                          aria-label="Reset password"
+                                          loading={resetAdminPasswordMutation.isPending}
+                                          onClick={() =>
+                                            setAdminUserPasswordTarget({
+                                              userId: user.id,
+                                              label:
+                                                `${user.firstName} ${user.lastName}`.trim() ||
+                                                user.email,
+                                              password: adminResetPasswordByUserId[user.id] ?? ""
+                                            })
                                           }
-                                          const trimmedValue = value.trim();
-                                          setAdminResetPasswordByUserId((prev) => ({
-                                            ...prev,
-                                            [user.id]: trimmedValue
-                                          }));
-                                          if (trimmedValue.length < 8) {
-                                            notifications.show({
-                                              color: "red",
-                                              title: "Validation failed",
-                                              message: "Password must be at least 8 characters."
-                                            });
-                                            return;
+                                        >
+                                          <IconKey size={15} />
+                                        </ActionIcon>
+                                      </Tooltip>
+                                      <Tooltip label="Delete user" openDelay={150}>
+                                        <ActionIcon
+                                          size="sm"
+                                          variant="subtle"
+                                          color="red"
+                                          aria-label="Delete user"
+                                          loading={adminBulkUsersMutation.isPending}
+                                          onClick={() =>
+                                            setAdminUserDeleteTarget({
+                                              userIds: [user.id],
+                                              label:
+                                                `${user.firstName} ${user.lastName}`.trim() ||
+                                                user.email
+                                            })
                                           }
-                                          resetAdminPasswordMutation.mutate({
-                                            userId: user.id,
-                                            newPassword: trimmedValue
-                                          });
-                                        }}
-                                      >
-                                        Reset password
-                                      </Button>
-                                      <Button
-                                        size="xs"
-                                        color="red"
-                                        variant="light"
-                                        leftSection={<IconTrash size={14} />}
-                                        loading={adminBulkUsersMutation.isPending}
-                                        onClick={() =>
-                                          adminBulkUsersMutation.mutate({
-                                            action: "delete",
-                                            userIds: [user.id]
-                                          })
-                                        }
-                                      >
-                                        Delete
-                                      </Button>
+                                        >
+                                          <IconTrash size={15} />
+                                        </ActionIcon>
+                                      </Tooltip>
                                     </Group>
                                   </Table.Td>
                                 </Table.Tr>
@@ -2363,6 +2388,30 @@ function App() {
                             </Table.Tbody>
                             </Table>
                           </Table.ScrollContainer>
+                          {selectedAdminUserIds.length > 0 ? (
+                            <Group justify="space-between" align="center">
+                              <Text size="sm" c="var(--app-subtitle)">
+                                {selectedAdminUserIds.length} selected
+                              </Text>
+                              <Button
+                                size="xs"
+                                color="red"
+                                variant="light"
+                                loading={adminBulkUsersMutation.isPending}
+                                onClick={() =>
+                                  setAdminUserDeleteTarget({
+                                    userIds: selectedAdminUserIds,
+                                    label:
+                                      selectedAdminUserIds.length === 1
+                                        ? "this user"
+                                        : `${selectedAdminUserIds.length} users`
+                                  })
+                                }
+                              >
+                                Delete selected
+                              </Button>
+                            </Group>
+                          ) : null}
                           {filteredAdminUsers.length === 0 ? (
                             <Text size="sm" c="var(--app-subtitle)">
                               No matching users found.
@@ -2382,31 +2431,13 @@ function App() {
 
                       <Tabs.Panel value="spaces" pt="md">
                         <Stack gap="sm">
-                          <Group justify="space-between" align="center">
-                            <TextInput
-                              className="todo-input"
-                              placeholder="Search spaces..."
-                              leftSection={<IconSearch size={16} />}
-                              value={adminSpacesSearch}
-                              onChange={(event) => setAdminSpacesSearch(event.currentTarget.value)}
-                              style={{ flex: 1 }}
-                            />
-                            <Button
-                              size="xs"
-                              color="red"
-                              variant="light"
-                              disabled={selectedAdminSpaceIds.length === 0}
-                              loading={adminBulkSpacesMutation.isPending}
-                              onClick={() =>
-                                adminBulkSpacesMutation.mutate({
-                                  action: "delete",
-                                  spaceIds: selectedAdminSpaceIds
-                                })
-                              }
-                            >
-                              Delete selected
-                            </Button>
-                          </Group>
+                          <TextInput
+                            className="todo-input"
+                            placeholder="Search spaces..."
+                            leftSection={<IconSearch size={16} />}
+                            value={adminSpacesSearch}
+                            onChange={(event) => setAdminSpacesSearch(event.currentTarget.value)}
+                          />
                           <Table.ScrollContainer minWidth={720}>
                             <Table striped highlightOnHover withTableBorder withColumnBorders>
                             <Table.Thead>
@@ -2442,13 +2473,13 @@ function App() {
                                 <Table.Th>Name</Table.Th>
                                 <Table.Th>Owner</Table.Th>
                                 <Table.Th>Tasks</Table.Th>
-                                <Table.Th>Actions</Table.Th>
+                                <Table.Th ta="center">Actions</Table.Th>
                               </Table.Tr>
                             </Table.Thead>
                             <Table.Tbody>
                               {pagedAdminSpaces.map((space) => (
                                 <Table.Tr key={space.id}>
-                                  <Table.Td>
+                                  <Table.Td ta="center">
                                     <Checkbox
                                       checked={selectedAdminSpaceIds.includes(space.id)}
                                       onChange={(event) => {
@@ -2464,40 +2495,42 @@ function App() {
                                   <Table.Td>{space.ownerEmail}</Table.Td>
                                   <Table.Td>{space.totalTaskCount}</Table.Td>
                                   <Table.Td>
-                                    <Group gap={6} wrap="nowrap">
-                                      <Button
-                                        size="xs"
-                                        variant="light"
-                                        leftSection={<IconPencil size={14} />}
-                                        loading={updateAdminSpaceMutation.isPending}
-                                        onClick={() => {
-                                          const nextName = window.prompt("Space name", space.name);
-                                          if (!nextName || nextName.trim().length < 2) {
-                                            return;
+                                    <Group gap={4} wrap="nowrap" justify="center">
+                                      <Tooltip label="Edit space" openDelay={150}>
+                                        <ActionIcon
+                                          size="sm"
+                                          variant="subtle"
+                                          color="cyan"
+                                          aria-label="Edit space"
+                                          loading={updateAdminSpaceMutation.isPending}
+                                          onClick={() =>
+                                            setAdminSpaceEditTarget({
+                                              spaceId: space.id,
+                                              name: space.name,
+                                              description: space.description
+                                            })
                                           }
-                                          const nextDescription = window.prompt(
-                                            "Space description",
-                                            space.description
-                                          );
-                                          updateAdminSpaceMutation.mutate({
-                                            spaceId: space.id,
-                                            name: nextName.trim(),
-                                            description: (nextDescription ?? "").trim()
-                                          });
-                                        }}
-                                      >
-                                        Edit
-                                      </Button>
-                                      <Button
-                                        size="xs"
-                                        color="red"
-                                        variant="light"
-                                        leftSection={<IconTrash size={14} />}
-                                        loading={deleteAdminSpaceMutation.isPending}
-                                        onClick={() => deleteAdminSpaceMutation.mutate(space.id)}
-                                      >
-                                        Delete
-                                      </Button>
+                                        >
+                                          <IconPencil size={15} />
+                                        </ActionIcon>
+                                      </Tooltip>
+                                      <Tooltip label="Delete space" openDelay={150}>
+                                        <ActionIcon
+                                          size="sm"
+                                          variant="subtle"
+                                          color="red"
+                                          aria-label="Delete space"
+                                          loading={deleteAdminSpaceMutation.isPending}
+                                          onClick={() =>
+                                            setAdminSpaceDeleteTarget({
+                                              spaceIds: [space.id],
+                                              label: space.name
+                                            })
+                                          }
+                                        >
+                                          <IconTrash size={15} />
+                                        </ActionIcon>
+                                      </Tooltip>
                                     </Group>
                                   </Table.Td>
                                 </Table.Tr>
@@ -2505,6 +2538,30 @@ function App() {
                             </Table.Tbody>
                             </Table>
                           </Table.ScrollContainer>
+                          {selectedAdminSpaceIds.length > 0 ? (
+                            <Group justify="space-between" align="center">
+                              <Text size="sm" c="var(--app-subtitle)">
+                                {selectedAdminSpaceIds.length} selected
+                              </Text>
+                              <Button
+                                size="xs"
+                                color="red"
+                                variant="light"
+                                loading={adminBulkSpacesMutation.isPending}
+                                onClick={() =>
+                                  setAdminSpaceDeleteTarget({
+                                    spaceIds: selectedAdminSpaceIds,
+                                    label:
+                                      selectedAdminSpaceIds.length === 1
+                                        ? "this space"
+                                        : `${selectedAdminSpaceIds.length} spaces`
+                                  })
+                                }
+                              >
+                                Delete selected
+                              </Button>
+                            </Group>
+                          ) : null}
                           {filteredAdminSpaces.length === 0 ? (
                             <Text size="sm" c="var(--app-subtitle)">
                               No matching spaces found.
@@ -2533,46 +2590,6 @@ function App() {
                               onChange={(event) => setAdminTasksSearch(event.currentTarget.value)}
                               style={{ flex: 1 }}
                             />
-                            <Group gap="xs">
-                              <Select
-                                size="xs"
-                                value={adminBulkTaskStatus}
-                                onChange={(value) =>
-                                  value && setAdminBulkTaskStatus(value as TaskStatus)
-                                }
-                                data={taskStatusOptions}
-                              />
-                              <Button
-                                size="xs"
-                                variant="light"
-                                disabled={selectedAdminTaskIds.length === 0}
-                                loading={adminBulkTasksMutation.isPending}
-                                onClick={() =>
-                                  adminBulkTasksMutation.mutate({
-                                    action: "set-status",
-                                    taskIds: selectedAdminTaskIds,
-                                    status: adminBulkTaskStatus
-                                  })
-                                }
-                              >
-                                Set status
-                              </Button>
-                              <Button
-                                size="xs"
-                                color="red"
-                                variant="light"
-                                disabled={selectedAdminTaskIds.length === 0}
-                                loading={adminBulkTasksMutation.isPending}
-                                onClick={() =>
-                                  adminBulkTasksMutation.mutate({
-                                    action: "delete",
-                                    taskIds: selectedAdminTaskIds
-                                  })
-                                }
-                              >
-                                Delete selected
-                              </Button>
-                            </Group>
                           </Group>
                           <Table.ScrollContainer minWidth={780}>
                             <Table striped highlightOnHover withTableBorder withColumnBorders>
@@ -2609,13 +2626,13 @@ function App() {
                                 <Table.Th>Title</Table.Th>
                                 <Table.Th>Space</Table.Th>
                                 <Table.Th>Status</Table.Th>
-                                <Table.Th>Actions</Table.Th>
+                                <Table.Th ta="center">Actions</Table.Th>
                               </Table.Tr>
                             </Table.Thead>
                             <Table.Tbody>
                               {pagedAdminTasks.map((task) => (
                                 <Table.Tr key={task.id}>
-                                  <Table.Td>
+                                  <Table.Td ta="center">
                                     <Checkbox
                                       checked={selectedAdminTaskIds.includes(task.id)}
                                       onChange={(event) => {
@@ -2635,49 +2652,43 @@ function App() {
                                     </Badge>
                                   </Table.Td>
                                   <Table.Td>
-                                    <Group gap={6} wrap="wrap">
-                                      <Button
-                                        size="xs"
-                                        variant="light"
-                                        leftSection={<IconPencil size={14} />}
-                                        loading={updateAdminTaskMutation.isPending}
-                                        onClick={() => {
-                                          const nextTitle = window.prompt("Task title", task.title);
-                                          if (!nextTitle || nextTitle.trim().length < 2) {
-                                            return;
+                                    <Group gap={4} wrap="nowrap" justify="center">
+                                      <Tooltip label="Edit task" openDelay={150}>
+                                        <ActionIcon
+                                          size="sm"
+                                          variant="subtle"
+                                          color="cyan"
+                                          aria-label="Edit task"
+                                          loading={updateAdminTaskMutation.isPending}
+                                          onClick={() =>
+                                            setAdminTaskEditTarget({
+                                              taskId: task.id,
+                                              title: task.title,
+                                              description: task.description,
+                                              status: task.status
+                                            })
                                           }
-                                          updateAdminTaskMutation.mutate({
-                                            taskId: task.id,
-                                            payload: { title: nextTitle.trim() }
-                                          });
-                                        }}
-                                      >
-                                        Edit
-                                      </Button>
-                                      <Select
-                                        size="xs"
-                                        value={task.status}
-                                        data={taskStatusOptions}
-                                        onChange={(value) => {
-                                          if (!value) {
-                                            return;
+                                        >
+                                          <IconPencil size={15} />
+                                        </ActionIcon>
+                                      </Tooltip>
+                                      <Tooltip label="Delete task" openDelay={150}>
+                                        <ActionIcon
+                                          size="sm"
+                                          variant="subtle"
+                                          color="red"
+                                          aria-label="Delete task"
+                                          loading={deleteAdminTaskMutation.isPending}
+                                          onClick={() =>
+                                            setAdminTaskDeleteTarget({
+                                              taskIds: [task.id],
+                                              label: task.title
+                                            })
                                           }
-                                          updateAdminTaskMutation.mutate({
-                                            taskId: task.id,
-                                            payload: { status: value as TaskStatus }
-                                          });
-                                        }}
-                                      />
-                                      <Button
-                                        size="xs"
-                                        color="red"
-                                        variant="light"
-                                        leftSection={<IconTrash size={14} />}
-                                        loading={deleteAdminTaskMutation.isPending}
-                                        onClick={() => deleteAdminTaskMutation.mutate(task.id)}
-                                      >
-                                        Delete
-                                      </Button>
+                                        >
+                                          <IconTrash size={15} />
+                                        </ActionIcon>
+                                      </Tooltip>
                                     </Group>
                                   </Table.Td>
                                 </Table.Tr>
@@ -2685,6 +2696,54 @@ function App() {
                             </Table.Tbody>
                             </Table>
                           </Table.ScrollContainer>
+                          {selectedAdminTaskIds.length > 0 ? (
+                            <Group justify="space-between" align="center">
+                              <Text size="sm" c="var(--app-subtitle)">
+                                {selectedAdminTaskIds.length} selected
+                              </Text>
+                              <Group gap="xs">
+                                <Select
+                                  size="xs"
+                                  value={adminBulkTaskStatus}
+                                  onChange={(value) =>
+                                    value && setAdminBulkTaskStatus(value as TaskStatus)
+                                  }
+                                  data={taskStatusOptions}
+                                />
+                                <Button
+                                  size="xs"
+                                  variant="light"
+                                  loading={adminBulkTasksMutation.isPending}
+                                  onClick={() =>
+                                    adminBulkTasksMutation.mutate({
+                                      action: "set-status",
+                                      taskIds: selectedAdminTaskIds,
+                                      status: adminBulkTaskStatus
+                                    })
+                                  }
+                                >
+                                  Set status
+                                </Button>
+                                <Button
+                                  size="xs"
+                                  color="red"
+                                  variant="light"
+                                  loading={adminBulkTasksMutation.isPending}
+                                  onClick={() =>
+                                    setAdminTaskDeleteTarget({
+                                      taskIds: selectedAdminTaskIds,
+                                      label:
+                                        selectedAdminTaskIds.length === 1
+                                          ? "this task"
+                                          : `${selectedAdminTaskIds.length} tasks`
+                                    })
+                                  }
+                                >
+                                  Delete selected
+                                </Button>
+                              </Group>
+                            </Group>
+                          ) : null}
                           {filteredAdminTasks.length === 0 ? (
                             <Text size="sm" c="var(--app-subtitle)">
                               No matching tasks found.
@@ -3677,6 +3736,467 @@ function App() {
               }}
             >
               Delete space
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
+      <Modal
+        opened={Boolean(adminUserEditTarget)}
+        onClose={() => setAdminUserEditTarget(null)}
+        title="Edit user"
+        centered
+      >
+        <Stack>
+          <TextInput
+            className="todo-input"
+            label="Email"
+            value={adminUserEditTarget?.email ?? ""}
+            readOnly
+          />
+          <Group grow>
+            <TextInput
+              className="todo-input"
+              label="First name"
+              value={adminUserEditTarget?.firstName ?? ""}
+              onChange={(event) =>
+                setAdminUserEditTarget((prev) =>
+                  prev
+                    ? {
+                        ...prev,
+                        firstName: event.currentTarget.value
+                      }
+                    : prev
+                )
+              }
+            />
+            <TextInput
+              className="todo-input"
+              label="Last name"
+              value={adminUserEditTarget?.lastName ?? ""}
+              onChange={(event) =>
+                setAdminUserEditTarget((prev) =>
+                  prev
+                    ? {
+                        ...prev,
+                        lastName: event.currentTarget.value
+                      }
+                    : prev
+                )
+              }
+            />
+          </Group>
+          <Group justify="flex-end">
+            <Button variant="light" onClick={() => setAdminUserEditTarget(null)}>
+              Cancel
+            </Button>
+            <Button
+              loading={updateAdminUserMutation.isPending}
+              onClick={() => {
+                if (!adminUserEditTarget) {
+                  return;
+                }
+                const firstName = adminUserEditTarget.firstName.trim();
+                const lastName = adminUserEditTarget.lastName.trim();
+                if (firstName.length < 2 || lastName.length < 2) {
+                  notifications.show({
+                    color: "red",
+                    title: "Validation failed",
+                    message: "First and last name must be at least 2 characters."
+                  });
+                  return;
+                }
+                updateAdminUserMutation.mutate({
+                  userId: adminUserEditTarget.userId,
+                  payload: {
+                    firstName,
+                    lastName
+                  }
+                });
+              }}
+            >
+              Save changes
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
+      <Modal
+        opened={Boolean(adminUserDeleteTarget)}
+        onClose={() => setAdminUserDeleteTarget(null)}
+        title="Delete user?"
+        centered
+      >
+        <Stack>
+          <Text c="var(--app-subtitle)">
+            This will permanently delete{" "}
+            <Text span fw={700} c="var(--app-text)">
+              {adminUserDeleteTarget?.label || "this user"}
+            </Text>
+            .
+          </Text>
+          <Group justify="flex-end">
+            <Button variant="light" onClick={() => setAdminUserDeleteTarget(null)}>
+              Cancel
+            </Button>
+            <Button
+              color="red"
+              loading={adminBulkUsersMutation.isPending}
+              onClick={() => {
+                if (!adminUserDeleteTarget) {
+                  return;
+                }
+                adminBulkUsersMutation.mutate({
+                  action: "delete",
+                  userIds: adminUserDeleteTarget.userIds
+                });
+              }}
+            >
+              Delete user
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
+      <Modal
+        opened={Boolean(adminUserRoleTarget)}
+        onClose={() => setAdminUserRoleTarget(null)}
+        title={adminUserRoleTarget?.nextIsAdmin ? "Set admin?" : "Unset admin?"}
+        centered
+      >
+        <Stack>
+          <Text c="var(--app-subtitle)">
+            {adminUserRoleTarget?.nextIsAdmin ? "Grant admin access to " : "Remove admin access from "}
+            <Text span fw={700} c="var(--app-text)">
+              {adminUserRoleTarget?.label || "this user"}
+            </Text>
+            ?
+          </Text>
+          <Group justify="flex-end">
+            <Button variant="light" onClick={() => setAdminUserRoleTarget(null)}>
+              Cancel
+            </Button>
+            <Button
+              color={adminUserRoleTarget?.nextIsAdmin ? "cyan" : "orange"}
+              loading={updateAdminUserMutation.isPending}
+              onClick={() => {
+                if (!adminUserRoleTarget) {
+                  return;
+                }
+                updateAdminUserMutation.mutate({
+                  userId: adminUserRoleTarget.userId,
+                  payload: { isAdmin: adminUserRoleTarget.nextIsAdmin }
+                });
+              }}
+            >
+              {adminUserRoleTarget?.nextIsAdmin ? "Set admin" : "Unset admin"}
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
+      <Modal
+        opened={Boolean(adminUserPasswordTarget)}
+        onClose={() => setAdminUserPasswordTarget(null)}
+        title="Reset password"
+        centered
+      >
+        <Stack>
+          <Text c="var(--app-subtitle)">
+            Set a new password for{" "}
+            <Text span fw={700} c="var(--app-text)">
+              {adminUserPasswordTarget?.label || "this user"}
+            </Text>
+            .
+          </Text>
+          <PasswordInput
+            className="todo-input"
+            label="New password"
+            value={adminUserPasswordTarget?.password ?? ""}
+            onChange={(event) =>
+              setAdminUserPasswordTarget((prev) =>
+                prev
+                  ? {
+                      ...prev,
+                      password: event.currentTarget.value
+                    }
+                  : prev
+              )
+            }
+          />
+          <Group justify="flex-end">
+            <Button variant="light" onClick={() => setAdminUserPasswordTarget(null)}>
+              Cancel
+            </Button>
+            <Button
+              color="yellow"
+              loading={resetAdminPasswordMutation.isPending}
+              onClick={() => {
+                if (!adminUserPasswordTarget) {
+                  return;
+                }
+                const trimmedValue = adminUserPasswordTarget.password.trim();
+                setAdminResetPasswordByUserId((prev) => ({
+                  ...prev,
+                  [adminUserPasswordTarget.userId]: trimmedValue
+                }));
+                if (trimmedValue.length < 8) {
+                  notifications.show({
+                    color: "red",
+                    title: "Validation failed",
+                    message: "Password must be at least 8 characters."
+                  });
+                  return;
+                }
+                resetAdminPasswordMutation.mutate({
+                  userId: adminUserPasswordTarget.userId,
+                  newPassword: trimmedValue
+                });
+              }}
+            >
+              Reset password
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
+      <Modal
+        opened={Boolean(adminSpaceEditTarget)}
+        onClose={() => setAdminSpaceEditTarget(null)}
+        title="Edit space"
+        centered
+      >
+        <Stack>
+          <TextInput
+            className="todo-input"
+            label="Space name"
+            value={adminSpaceEditTarget?.name ?? ""}
+            onChange={(event) =>
+              setAdminSpaceEditTarget((prev) =>
+                prev
+                  ? {
+                      ...prev,
+                      name: event.currentTarget.value
+                    }
+                  : prev
+              )
+            }
+          />
+          <Textarea
+            className="todo-input"
+            label="Description"
+            minRows={4}
+            value={adminSpaceEditTarget?.description ?? ""}
+            onChange={(event) =>
+              setAdminSpaceEditTarget((prev) =>
+                prev
+                  ? {
+                      ...prev,
+                      description: event.currentTarget.value
+                    }
+                  : prev
+              )
+            }
+          />
+          <Group justify="flex-end">
+            <Button variant="light" onClick={() => setAdminSpaceEditTarget(null)}>
+              Cancel
+            </Button>
+            <Button
+              loading={updateAdminSpaceMutation.isPending}
+              onClick={() => {
+                if (!adminSpaceEditTarget) {
+                  return;
+                }
+                const name = adminSpaceEditTarget.name.trim();
+                if (name.length < 2) {
+                  notifications.show({
+                    color: "red",
+                    title: "Validation failed",
+                    message: "Space name must be at least 2 characters."
+                  });
+                  return;
+                }
+                updateAdminSpaceMutation.mutate({
+                  spaceId: adminSpaceEditTarget.spaceId,
+                  name,
+                  description: adminSpaceEditTarget.description.trim()
+                });
+              }}
+            >
+              Save changes
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
+      <Modal
+        opened={Boolean(adminTaskEditTarget)}
+        onClose={() => setAdminTaskEditTarget(null)}
+        title="Edit task"
+        centered
+      >
+        <Stack>
+          <TextInput
+            className="todo-input"
+            label="Task title"
+            value={adminTaskEditTarget?.title ?? ""}
+            onChange={(event) =>
+              setAdminTaskEditTarget((prev) =>
+                prev
+                  ? {
+                      ...prev,
+                      title: event.currentTarget.value
+                    }
+                  : prev
+              )
+            }
+          />
+          <Textarea
+            className="todo-input"
+            label="Description"
+            minRows={4}
+            value={adminTaskEditTarget?.description ?? ""}
+            onChange={(event) =>
+              setAdminTaskEditTarget((prev) =>
+                prev
+                  ? {
+                      ...prev,
+                      description: event.currentTarget.value
+                    }
+                  : prev
+              )
+            }
+          />
+          <Select
+            className="todo-input"
+            label="Status"
+            value={adminTaskEditTarget?.status ?? null}
+            data={taskStatusOptions}
+            onChange={(value) =>
+              value &&
+              setAdminTaskEditTarget((prev) =>
+                prev
+                  ? {
+                      ...prev,
+                      status: value as TaskStatus
+                    }
+                  : prev
+              )
+            }
+          />
+          <Group justify="flex-end">
+            <Button variant="light" onClick={() => setAdminTaskEditTarget(null)}>
+              Cancel
+            </Button>
+            <Button
+              loading={updateAdminTaskMutation.isPending}
+              onClick={() => {
+                if (!adminTaskEditTarget) {
+                  return;
+                }
+                const title = adminTaskEditTarget.title.trim();
+                if (title.length < 2) {
+                  notifications.show({
+                    color: "red",
+                    title: "Validation failed",
+                    message: "Task title must be at least 2 characters."
+                  });
+                  return;
+                }
+                updateAdminTaskMutation.mutate({
+                  taskId: adminTaskEditTarget.taskId,
+                  payload: {
+                    title,
+                    description: adminTaskEditTarget.description.trim(),
+                    status: adminTaskEditTarget.status
+                  }
+                });
+              }}
+            >
+              Save changes
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
+      <Modal
+        opened={Boolean(adminSpaceDeleteTarget)}
+        onClose={() => setAdminSpaceDeleteTarget(null)}
+        title="Delete space?"
+        centered
+      >
+        <Stack>
+          <Text c="var(--app-subtitle)">
+            This will permanently delete{" "}
+            <Text span fw={700} c="var(--app-text)">
+              {adminSpaceDeleteTarget?.label || "this space"}
+            </Text>
+            .
+          </Text>
+          <Group justify="flex-end">
+            <Button variant="light" onClick={() => setAdminSpaceDeleteTarget(null)}>
+              Cancel
+            </Button>
+            <Button
+              color="red"
+              loading={
+                adminSpaceDeleteTarget?.spaceIds.length === 1
+                  ? deleteAdminSpaceMutation.isPending
+                  : adminBulkSpacesMutation.isPending
+              }
+              onClick={() => {
+                if (!adminSpaceDeleteTarget) {
+                  return;
+                }
+                if (adminSpaceDeleteTarget.spaceIds.length === 1) {
+                  deleteAdminSpaceMutation.mutate(adminSpaceDeleteTarget.spaceIds[0]);
+                  return;
+                }
+                adminBulkSpacesMutation.mutate({
+                  action: "delete",
+                  spaceIds: adminSpaceDeleteTarget.spaceIds
+                });
+              }}
+            >
+              Delete space
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
+      <Modal
+        opened={Boolean(adminTaskDeleteTarget)}
+        onClose={() => setAdminTaskDeleteTarget(null)}
+        title="Delete task?"
+        centered
+      >
+        <Stack>
+          <Text c="var(--app-subtitle)">
+            This will permanently delete{" "}
+            <Text span fw={700} c="var(--app-text)">
+              {adminTaskDeleteTarget?.label || "this task"}
+            </Text>
+            .
+          </Text>
+          <Group justify="flex-end">
+            <Button variant="light" onClick={() => setAdminTaskDeleteTarget(null)}>
+              Cancel
+            </Button>
+            <Button
+              color="red"
+              loading={
+                adminTaskDeleteTarget?.taskIds.length === 1
+                  ? deleteAdminTaskMutation.isPending
+                  : adminBulkTasksMutation.isPending
+              }
+              onClick={() => {
+                if (!adminTaskDeleteTarget) {
+                  return;
+                }
+                if (adminTaskDeleteTarget.taskIds.length === 1) {
+                  deleteAdminTaskMutation.mutate(adminTaskDeleteTarget.taskIds[0]);
+                  return;
+                }
+                adminBulkTasksMutation.mutate({
+                  action: "delete",
+                  taskIds: adminTaskDeleteTarget.taskIds
+                });
+              }}
+            >
+              Delete task
             </Button>
           </Group>
         </Stack>

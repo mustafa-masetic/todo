@@ -336,15 +336,6 @@ body {
   color: var(--app-text);
 }
 
-.mantine-ActionIcon-root[data-variant="subtle"] {
-  color: #f87171;
-}
-
-.mantine-ActionIcon-root[data-variant="subtle"]:hover {
-  background: color-mix(in srgb, #ef4444 26%, transparent);
-  color: #fecaca;
-}
-
 @media (max-width: 48em) {
   .page-container {
     min-height: calc(100vh - 1rem);
