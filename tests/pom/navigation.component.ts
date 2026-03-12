@@ -10,8 +10,13 @@ export class NavigationComponent {
   async closeNavigationDrawerIfOpen() {
     const dialog = this.navigationDialog();
     if (await dialog.isVisible()) {
-      await this.page.getByTestId("drawer-close-button").click();
-      await expect(dialog).toBeHidden();
+      try {
+        await expect(dialog).toBeHidden({ timeout: 1000 });
+        return;
+      } catch {
+        await dialog.getByTestId("drawer-close-button").click();
+        await expect(dialog).toBeHidden();
+      }
     }
   }
 
