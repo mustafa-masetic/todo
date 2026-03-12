@@ -38,7 +38,7 @@ test.describe("Admin", () => {
     await expect(page.getByText("Password must be at least 8 characters.")).toBeVisible();
   });
 
-  test.only("admin can edit a space from the spaces tab", async ({ page }) => {
+  test("admin can edit a space from the spaces tab", async ({ page }) => {
     const nav = new NavigationComponent(page);
     const adminPage = new AdminPage(page);
     const spacesPage = new SpacesPage(page);
@@ -58,6 +58,7 @@ test.describe("Admin", () => {
       description: "Updated from admin modal"
     });
 
+    await adminPage.searchSpaces(updatedName);
     await expect(adminPage.spaceRow(updatedName)).toBeVisible();
   });
 
@@ -90,6 +91,7 @@ test.describe("Admin", () => {
       status: "Done"
     });
 
+    await adminPage.searchTasks(updatedTitle);
     await expect(adminPage.taskRow(updatedTitle)).toContainText("Done");
   });
 });
