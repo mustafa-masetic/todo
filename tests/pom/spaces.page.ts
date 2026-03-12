@@ -14,6 +14,7 @@ export class SpacesPage {
   }
 
   async searchSpaces(query: string) {
+    await expect(this.page.getByRole("dialog", { name: "Navigation" })).toBeHidden();
     const input = this.page.getByTestId("spaces-search-input");
     await input.click();
     await input.fill("");

@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { test } from "@playwright/test";
 import { AuthPage } from "./pom/auth.page";
 import { NavigationComponent } from "./pom/navigation.component";
@@ -8,7 +9,7 @@ test.describe("Spaces", () => {
     const authPage = new AuthPage(page);
     const nav = new NavigationComponent(page);
     const spacesPage = new SpacesPage(page);
-    const unique = Date.now();
+    const unique = randomUUID();
     const email = `playwright.spaces.${unique}@example.com`;
     const spaceName = `PW Space ${unique}`;
 
@@ -21,6 +22,7 @@ test.describe("Spaces", () => {
       password: "TestPass123!"
     });
 
+    await nav.themeToggle().waitFor({ state: "visible" });
     await nav.goToSpaces();
     await spacesPage.createSpace(spaceName, "Created by Playwright");
     await spacesPage.expectSpaceVisible(spaceName);
@@ -38,7 +40,7 @@ test.describe("Spaces", () => {
     const authPage = new AuthPage(page);
     const nav = new NavigationComponent(page);
     const spacesPage = new SpacesPage(page);
-    const unique = Date.now();
+    const unique = randomUUID();
     const email = `playwright.spaces.delete.${unique}@example.com`;
     const spaceName = `PW Space Delete ${unique}`;
 
@@ -51,6 +53,7 @@ test.describe("Spaces", () => {
       password: "TestPass123!"
     });
 
+    await nav.themeToggle().waitFor({ state: "visible" });
     await nav.goToSpaces();
     await spacesPage.createSpace(spaceName, "Will be deleted by Playwright");
     await spacesPage.expectSpaceVisible(spaceName);

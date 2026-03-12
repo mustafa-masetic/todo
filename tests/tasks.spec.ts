@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { test } from "@playwright/test";
 import { AuthPage } from "./pom/auth.page";
 import { NavigationComponent } from "./pom/navigation.component";
@@ -10,7 +11,7 @@ test.describe("Tasks", () => {
     const nav = new NavigationComponent(page);
     const spacesPage = new SpacesPage(page);
     const taskDetail = new TaskDetailPage(page);
-    const unique = Date.now();
+    const unique = randomUUID();
     const email = `playwright.tasks.${unique}@example.com`;
     const spaceName = `PW Task Space ${unique}`;
     const taskTitle = `PW Task ${unique}`;
@@ -24,6 +25,7 @@ test.describe("Tasks", () => {
       password: "TestPass123!"
     });
 
+    await nav.themeToggle().waitFor({ state: "visible" });
     await nav.goToSpaces();
     await spacesPage.createSpace(spaceName, "Task flow space");
     await spacesPage.openSpaceByName(spaceName);
@@ -47,7 +49,7 @@ test.describe("Tasks", () => {
     const nav = new NavigationComponent(page);
     const spacesPage = new SpacesPage(page);
     const taskDetail = new TaskDetailPage(page);
-    const unique = Date.now();
+    const unique = randomUUID();
     const email = `playwright.tasks.delete.${unique}@example.com`;
     const spaceName = `PW Task Delete Space ${unique}`;
     const taskTitle = `PW Task Delete ${unique}`;
@@ -61,6 +63,7 @@ test.describe("Tasks", () => {
       password: "TestPass123!"
     });
 
+    await nav.themeToggle().waitFor({ state: "visible" });
     await nav.goToSpaces();
     await spacesPage.createSpace(spaceName, "Delete task flow");
     await spacesPage.openSpaceByName(spaceName);

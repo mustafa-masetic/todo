@@ -1794,6 +1794,10 @@ function App() {
         title="Navigation"
         position="left"
         size="86%"
+        closeButtonProps={{
+          "data-test-id": "drawer-close-button",
+          "aria-label": "Close navigation"
+        }}
       >
         <Stack gap="xs">
           <Button

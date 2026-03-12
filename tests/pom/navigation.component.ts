@@ -3,6 +3,18 @@ import { expect, type Locator, type Page } from "@playwright/test";
 export class NavigationComponent {
   constructor(private readonly page: Page) {}
 
+  navigationDialog() {
+    return this.page.getByRole("dialog", { name: "Navigation" });
+  }
+
+  async closeNavigationDrawerIfOpen() {
+    const dialog = this.navigationDialog();
+    if (await dialog.isVisible()) {
+      await this.page.getByTestId("drawer-close-button").click();
+      await expect(dialog).toBeHidden();
+    }
+  }
+
   homeButton() {
     return this.page.getByTestId("nav-home-button");
   }
@@ -87,6 +99,7 @@ export class NavigationComponent {
     }
     await mobileToggle.click();
     await this.page.getByTestId("drawer-spaces-button").click();
+    await this.closeNavigationDrawerIfOpen();
   }
 
   async goToTasks() {
@@ -114,6 +127,7 @@ export class NavigationComponent {
     }
     await mobileToggle.click();
     await this.page.getByTestId("drawer-tasks-button").click();
+    await this.closeNavigationDrawerIfOpen();
   }
 
   async goToAdmin() {
@@ -152,5 +166,6 @@ export class NavigationComponent {
       );
     }
     await drawerAdmin.click();
+    await this.closeNavigationDrawerIfOpen();
   }
 }
