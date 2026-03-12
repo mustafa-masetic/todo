@@ -1,5 +1,8 @@
 import { expect, type Page } from "@playwright/test";
 
+const SEARCH_TYPE_DELAY_MS = 35;
+const SEARCH_SETTLE_MS = 450;
+
 export class SpacesPage {
   constructor(private readonly page: Page) {}
 
@@ -11,7 +14,12 @@ export class SpacesPage {
   }
 
   async searchSpaces(query: string) {
-    await this.page.getByTestId("spaces-search-input").fill(query);
+    const input = this.page.getByTestId("spaces-search-input");
+    await input.click();
+    await input.fill("");
+    await input.pressSequentially(query, { delay: SEARCH_TYPE_DELAY_MS });
+    await expect(input).toHaveValue(query);
+    await this.page.waitForTimeout(SEARCH_SETTLE_MS);
   }
 
   async openSpaceByName(name: string) {

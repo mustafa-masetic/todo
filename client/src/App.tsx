@@ -730,6 +730,8 @@ function App() {
       setSelectedSpaceId(space.id);
       localStorage.setItem(SELECTED_SPACE_KEY, String(space.id));
       queryClient.invalidateQueries({ queryKey: ["spaces"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-spaces"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-overview"] });
       notifications.show({
         color: "teal",
         title: "Space created",
@@ -822,6 +824,8 @@ function App() {
       setTaskModalOpen(false);
       queryClient.invalidateQueries({ queryKey: ["todos"] });
       queryClient.invalidateQueries({ queryKey: ["activity-todos"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-overview"] });
       notifications.show({
         color: "teal",
         title: "Task added",
@@ -852,6 +856,8 @@ function App() {
       queryClient.invalidateQueries({ queryKey: ["todos"] });
       queryClient.invalidateQueries({ queryKey: ["activity-todos"] });
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-overview"] });
       if (variables.fromDetail) {
         navigateTo("/tasks");
       }
@@ -890,6 +896,7 @@ function App() {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       queryClient.invalidateQueries({ queryKey: ["activity-todos"] });
       queryClient.invalidateQueries({ queryKey: ["todos"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-tasks"] });
       notifications.show({
         color: "teal",
         title: "Task updated",
@@ -919,6 +926,9 @@ function App() {
       queryClient.invalidateQueries({ queryKey: ["activity-invites"] });
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       queryClient.invalidateQueries({ queryKey: ["todos"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-spaces"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-overview"] });
       notifications.show({
         color: "teal",
         title: "Space deleted",

@@ -41,9 +41,12 @@ export class NavigationComponent {
     if (await mobileToggle.isVisible()) {
       await mobileToggle.click();
       const drawerLogout = this.page.getByTestId("drawer-logout-button");
-      if (await drawerLogout.isVisible()) {
+      try {
+        await drawerLogout.waitFor({ state: "visible", timeout: 1000 });
         await drawerLogout.click();
         return;
+      } catch {
+        await this.page.keyboard.press("Escape");
       }
     }
 
@@ -60,52 +63,94 @@ export class NavigationComponent {
   }
 
   async goToSpaces() {
-    const desktopSpaces = this.page
-      .getByRole("banner")
-      .getByRole("button", { name: "Spaces", exact: true })
-      .first();
+    const desktopSpaces = this.page.getByTestId("nav-spaces-button");
+    const mobileToggle = this.page.getByTestId("nav-mobile-menu-toggle");
+
+    await expect
+      .poll(
+        async () =>
+          (await desktopSpaces.isVisible()) || (await mobileToggle.isVisible()),
+        {
+          timeout: 5000,
+          message: "Expected desktop Spaces navigation or mobile menu toggle to become visible."
+        }
+      )
+      .toBeTruthy();
+
     if (await desktopSpaces.isVisible()) {
       await desktopSpaces.click();
       return;
     }
 
-    const mobileToggle = this.page
-      .getByTestId("nav-mobile-menu-toggle")
-      .or(this.page.getByRole("button", { name: "Open navigation menu" }))
-      .first();
     if (!(await mobileToggle.isVisible())) {
       throw new Error("Neither desktop nor mobile Spaces navigation is visible.");
     }
     await mobileToggle.click();
-    await this.page
-      .getByTestId("drawer-spaces-button")
-      .or(this.page.getByRole("button", { name: "Spaces" }))
-      .first()
-      .click();
+    await this.page.getByTestId("drawer-spaces-button").click();
   }
 
   async goToTasks() {
-    const desktopTasks = this.page
-      .getByRole("banner")
-      .getByRole("button", { name: "Tasks", exact: true })
-      .first();
+    const desktopTasks = this.page.getByTestId("nav-tasks-button");
+    const mobileToggle = this.page.getByTestId("nav-mobile-menu-toggle");
+
+    await expect
+      .poll(
+        async () =>
+          (await desktopTasks.isVisible()) || (await mobileToggle.isVisible()),
+        {
+          timeout: 5000,
+          message: "Expected desktop Tasks navigation or mobile menu toggle to become visible."
+        }
+      )
+      .toBeTruthy();
+
     if (await desktopTasks.isVisible()) {
       await desktopTasks.click();
       return;
     }
 
-    const mobileToggle = this.page
-      .getByTestId("nav-mobile-menu-toggle")
-      .or(this.page.getByRole("button", { name: "Open navigation menu" }))
-      .first();
     if (!(await mobileToggle.isVisible())) {
       throw new Error("Neither desktop nor mobile Tasks navigation is visible.");
     }
     await mobileToggle.click();
-    await this.page
-      .getByTestId("drawer-tasks-button")
-      .or(this.page.getByRole("button", { name: "Tasks" }))
-      .first()
-      .click();
+    await this.page.getByTestId("drawer-tasks-button").click();
+  }
+
+  async goToAdmin() {
+    const desktopAdmin = this.page.getByTestId("nav-admin-button");
+    const mobileToggle = this.page.getByTestId("nav-mobile-menu-toggle");
+    const accountMenuButton = this.page.getByTestId("nav-account-menu-button");
+
+    await expect
+      .poll(
+        async () =>
+          (await desktopAdmin.isVisible()) ||
+          (await mobileToggle.isVisible()) ||
+          (await accountMenuButton.isVisible()),
+        {
+          timeout: 5000,
+          message: "Expected logged-in navigation controls to become visible."
+        }
+      )
+      .toBeTruthy();
+
+    if (await desktopAdmin.isVisible()) {
+      await desktopAdmin.click();
+      return;
+    }
+
+    if (!(await mobileToggle.isVisible())) {
+      throw new Error(
+        "Admin navigation is not visible for the logged-in user. This account is likely not an admin."
+      );
+    }
+    await mobileToggle.click();
+    const drawerAdmin = this.page.getByTestId("drawer-admin-button");
+    if (!(await drawerAdmin.isVisible())) {
+      throw new Error(
+        "Admin navigation is not visible in the mobile drawer. This account is likely not an admin."
+      );
+    }
+    await drawerAdmin.click();
   }
 }
