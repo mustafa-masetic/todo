@@ -165,7 +165,9 @@ export class NavigationComponent {
     }
     await mobileToggle.click();
     const drawerAdmin = this.page.getByTestId("drawer-admin-button");
-    if (!(await drawerAdmin.isVisible())) {
+    try {
+      await drawerAdmin.waitFor({ state: "visible", timeout: 2000 });
+    } catch {
       throw new Error(
         "Admin navigation is not visible in the mobile drawer. This account is likely not an admin."
       );
