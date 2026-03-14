@@ -3,6 +3,12 @@ import { expect, type Locator, type Page } from "@playwright/test";
 export class NavigationComponent {
   constructor(private readonly page: Page) {}
 
+  private async ensureAppLoaded() {
+    if (this.page.url() === "about:blank") {
+      await this.page.goto("/");
+    }
+  }
+
   navigationDialog() {
     return this.page.getByRole("dialog", { name: "Navigation" });
   }
@@ -46,6 +52,7 @@ export class NavigationComponent {
   }
 
   async openGlobalSearch() {
+    await this.ensureAppLoaded();
     await expect(this.searchTrigger()).toBeVisible();
     await this.searchTrigger().click();
   }
@@ -80,6 +87,7 @@ export class NavigationComponent {
   }
 
   async goToSpaces() {
+    await this.ensureAppLoaded();
     const desktopSpaces = this.page.getByTestId("nav-spaces-button");
     const mobileToggle = this.page.getByTestId("nav-mobile-menu-toggle");
 
@@ -108,6 +116,7 @@ export class NavigationComponent {
   }
 
   async goToTasks() {
+    await this.ensureAppLoaded();
     const desktopTasks = this.page.getByTestId("nav-tasks-button");
     const mobileToggle = this.page.getByTestId("nav-mobile-menu-toggle");
 
@@ -136,6 +145,7 @@ export class NavigationComponent {
   }
 
   async goToAdmin() {
+    await this.ensureAppLoaded();
     const desktopAdmin = this.page.getByTestId("nav-admin-button");
     const mobileToggle = this.page.getByTestId("nav-mobile-menu-toggle");
     const accountMenuButton = this.page.getByTestId("nav-account-menu-button");

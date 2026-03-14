@@ -1,24 +1,24 @@
-import { expect, test } from "@playwright/test";
-import { AuthPage } from "./pom/auth.page";
+import { expect, test } from "./fixtures/auth-session";
 import { NavigationComponent } from "./pom/navigation.component";
+import { ensurePageLoaded } from "./utils/page";
 
 test.describe("Search", () => {
-  test("opens and closes global search with keyboard shortcuts", async ({ page }) => {
-    const authPage = new AuthPage(page);
-    const nav = new NavigationComponent(page);
-    const unique = Date.now();
-    const email = `playwright.search.${unique}@example.com`;
-
-    await authPage.gotoRegister();
-    await authPage.register({
+  test.use({
+    authSession: {
+      mode: "register",
+      email: "playwright.search@example.com",
       firstName: "Search",
       lastName: "Tester",
-      email,
       gender: "Other",
       password: "TestPass123!"
-    });
+    }
+  });
 
+  test("opens and closes global search with keyboard shortcuts", async ({ page }) => {
+    const nav = new NavigationComponent(page);
     const globalSearchInput = page.getByTestId("global-search-input");
+
+    await ensurePageLoaded(page);
 
     // Ensure the document has focus before sending shortcuts.
     await page.mouse.click(10, 10);

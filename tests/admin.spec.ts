@@ -1,39 +1,34 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures/auth-session";
 import { AdminPage } from "./pom/admin.page";
-import { AuthPage } from "./pom/auth.page";
 import { NavigationComponent } from "./pom/navigation.component";
 import { SpacesPage } from "./pom/spaces.page";
 import { TaskDetailPage } from "./pom/task-detail.page";
 
+const email = process.env.E2E_EMAIL;
+const password = process.env.E2E_PASSWORD;
+
 test.describe("Admin", () => {
-  test.beforeEach(async ({ page }) => {
-    const authPage = new AuthPage(page);
-    const email = process.env.E2E_EMAIL;
-    const password = process.env.E2E_PASSWORD;
-
-    test.skip(!email || !password, "Set E2E_EMAIL and E2E_PASSWORD to run admin tests.");
-
-    await authPage.gotoLogin();
-    await authPage.login(email as string, password as string);
+  test.skip(!email || !password, "Set E2E_EMAIL and E2E_PASSWORD to run admin tests.");
+  test.use({
+    authSession: email && password ? { mode: "login", email, password } : null
   });
 
   test("admin can edit a user and validate password reset modal", async ({ page }) => {
     const nav = new NavigationComponent(page);
     const adminPage = new AdminPage(page);
     const unique = Date.now();
-    const email = process.env.E2E_EMAIL as string;
     const updatedFirst = "Updated";
     const updatedLast = `Admin${unique}`;
 
     await nav.goToAdmin();
     await adminPage.expectVisible();
-    await adminPage.searchUsers(email);
+    await adminPage.searchUsers(email as string);
 
-    await adminPage.openUserEdit(email);
+    await adminPage.openUserEdit(email as string);
     await adminPage.saveUserEdit({ firstName: updatedFirst, lastName: updatedLast });
-    await expect(adminPage.userRow(email)).toContainText(`${updatedFirst} ${updatedLast}`);
+    await expect(adminPage.userRow(email as string)).toContainText(`${updatedFirst} ${updatedLast}`);
 
-    await adminPage.openUserPasswordReset(email);
+    await adminPage.openUserPasswordReset(email as string);
     await adminPage.submitPasswordReset("short");
     await expect(page.getByText("Password must be at least 8 characters.")).toBeVisible();
   });

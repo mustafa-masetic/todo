@@ -6,19 +6,27 @@ import { NavigationComponent } from "./pom/navigation.component";
 test.describe("Auth Negative", () => {
   test("rejects invalid login credentials", async ({ page }) => {
     const authPage = new AuthPage(page);
+    const authErrorAlert = page.getByRole("alert").filter({
+      has: page.getByText("Invalid credentials.")
+    });
 
     await authPage.gotoLogin();
-    await authPage.login("invalid.user@example.com", "WrongPass123!");
+    await authPage.login("invalid.user@example.com", "WrongPass123!", {
+      waitForAuthenticatedUi: false
+    });
 
     await expect(page).toHaveURL(/\/login$/);
     await expect(page.getByTestId("auth-submit-button")).toBeVisible();
-    await expect(page.getByText("Authentication failed")).toBeVisible();
+    await expect(authErrorAlert).toBeVisible();
   });
 
   test("rejects duplicate registration email", async ({ page }) => {
     const authPage = new AuthPage(page);
     const homePage = new HomePage(page);
     const nav = new NavigationComponent(page);
+    const alreadyRegisteredAlert = page.getByRole("alert").filter({
+      has: page.getByText("Email is already registered.")
+    });
     const unique = Date.now();
     const email = `playwright.duplicate.${unique}@example.com`;
 
@@ -36,15 +44,18 @@ test.describe("Auth Negative", () => {
     await expect(page).toHaveURL("/");
 
     await authPage.gotoRegister();
-    await authPage.register({
-      firstName: "Duplicate",
-      lastName: "Tester",
-      email,
-      gender: "Other",
-      password: "TestPass123!"
-    });
+    await authPage.register(
+      {
+        firstName: "Duplicate",
+        lastName: "Tester",
+        email,
+        gender: "Other",
+        password: "TestPass123!"
+      },
+      { waitForAuthenticatedUi: false }
+    );
 
     await expect(page).toHaveURL(/\/register$/);
-    await expect(page.getByText("Authentication failed")).toBeVisible();
+    await expect(alreadyRegisteredAlert).toBeVisible();
   });
 });

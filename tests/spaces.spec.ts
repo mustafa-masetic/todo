@@ -1,27 +1,28 @@
 import { randomUUID } from "node:crypto";
-import { test } from "@playwright/test";
-import { AuthPage } from "./pom/auth.page";
+import { test } from "./fixtures/auth-session";
 import { NavigationComponent } from "./pom/navigation.component";
 import { SpacesPage } from "./pom/spaces.page";
+import { ensurePageLoaded } from "./utils/page";
 
 test.describe("Spaces", () => {
+  test.use({
+    authSession: {
+      mode: "register",
+      email: "playwright.spaces@example.com",
+      firstName: "Space",
+      lastName: "Tester",
+      gender: "Other",
+      password: "TestPass123!"
+    }
+  });
+
   test("creates and searches a space", async ({ page }) => {
-    const authPage = new AuthPage(page);
     const nav = new NavigationComponent(page);
     const spacesPage = new SpacesPage(page);
     const unique = randomUUID();
-    const email = `playwright.spaces.${unique}@example.com`;
     const spaceName = `PW Space ${unique}`;
 
-    await authPage.gotoRegister();
-    await authPage.register({
-      firstName: "Space",
-      lastName: "Tester",
-      email,
-      gender: "Other",
-      password: "TestPass123!"
-    });
-
+    await ensurePageLoaded(page);
     await nav.themeToggle().waitFor({ state: "visible" });
     await nav.goToSpaces();
     await spacesPage.createSpace(spaceName, "Created by Playwright");
@@ -37,22 +38,12 @@ test.describe("Spaces", () => {
   });
 
   test("creates and deletes a space", async ({ page }) => {
-    const authPage = new AuthPage(page);
     const nav = new NavigationComponent(page);
     const spacesPage = new SpacesPage(page);
     const unique = randomUUID();
-    const email = `playwright.spaces.delete.${unique}@example.com`;
     const spaceName = `PW Space Delete ${unique}`;
 
-    await authPage.gotoRegister();
-    await authPage.register({
-      firstName: "Space",
-      lastName: "Delete",
-      email,
-      gender: "Other",
-      password: "TestPass123!"
-    });
-
+    await ensurePageLoaded(page);
     await nav.themeToggle().waitFor({ state: "visible" });
     await nav.goToSpaces();
     await spacesPage.createSpace(spaceName, "Will be deleted by Playwright");
