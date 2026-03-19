@@ -97,14 +97,17 @@ body {
 }
 
 .nav-links {
-  overflow-x: auto;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .top-nav-bar {
+  min-width: 0;
   padding: 8px 0;
 }
 
 .top-nav-controls {
+  min-width: 0;
   margin-left: auto;
 }
 
