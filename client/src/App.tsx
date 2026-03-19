@@ -2152,7 +2152,7 @@ function App() {
                               <Text fw={600} c="var(--app-text)">
                                 {space.name}
                               </Text>
-                              <Text size="sm" c="var(--app-subtitle)">
+                              <Text size="sm" c="var(--app-subtitle)" className="multiline-preview">
                                 {space.description || "No description"}
                               </Text>
                             </Box>
@@ -2201,7 +2201,7 @@ function App() {
                               <Text fw={600} c="var(--app-text)">
                                 {item.title}
                               </Text>
-                              <Text size="sm" c="var(--app-subtitle)">
+                              <Text size="sm" c="var(--app-subtitle)" className="multiline-preview">
                                 {item.description || "No description"}
                               </Text>
                               <Tooltip label={`Space: ${item.spaceName}`} openDelay={200}>
@@ -3023,7 +3023,7 @@ function App() {
                               <Group justify="space-between" align="flex-start" wrap="nowrap">
                                 <Box>
                                   <Text fw={700}>{space.name}</Text>
-                                  <Text size="sm" c="var(--app-subtitle)">
+                                  <Text size="sm" c="var(--app-subtitle)" className="multiline-preview">
                                     {space.description || "No description"}
                                   </Text>
                                 </Box>
@@ -3278,7 +3278,7 @@ function App() {
                                       <Text fw={600} c="var(--app-text)">
                                         {todo.title}
                                       </Text>
-                                      <Text size="sm" c="var(--app-subtitle)">
+                                      <Text size="sm" c="var(--app-subtitle)" className="multiline-preview">
                                         {todo.description || "No description"}
                                       </Text>
                                     </Box>
@@ -3373,7 +3373,7 @@ function App() {
                         <Text fw={600} c="var(--app-text)">
                           {item.title}
                         </Text>
-                        <Text size="sm" c="var(--app-subtitle)">
+                        <Text size="sm" c="var(--app-subtitle)" className="multiline-preview">
                           {item.description || "No description"}
                         </Text>
                         <Tooltip label={`Space: ${item.spaceName}`} openDelay={200}>
@@ -3526,7 +3526,8 @@ function App() {
                                 data-test-id="task-description-input"
                                 className="todo-input"
                                 label="Description"
-                                minRows={4}
+                                minRows={6}
+                                autosize
                                 autoFocus
                                 value={taskDetailDescription}
                                 onBlur={() => setTaskDescriptionEditMode(false)}
@@ -3558,7 +3559,11 @@ function App() {
                               >
                                 <Text
                                   c="var(--app-text)"
-                                  style={{ margin: 0, cursor: taskCanWrite ? "text" : "default" }}
+                                  style={{
+                                    margin: 0,
+                                    cursor: taskCanWrite ? "text" : "default",
+                                    whiteSpace: "pre-wrap"
+                                  }}
                                 >
                                   {taskDetailDescription || "No description"}
                                 </Text>
@@ -4300,7 +4305,7 @@ function App() {
                             <Text fw={600} c="var(--app-text)">
                               {result.title}
                             </Text>
-                            <Text size="sm" c="var(--app-subtitle)">
+                            <Text size="sm" c="var(--app-subtitle)" className="multiline-preview">
                               {result.description}
                             </Text>
                             <Text size="xs" c="var(--app-subtitle)" mt={4}>
@@ -4494,7 +4499,8 @@ function App() {
             className="todo-input"
             value={newTaskDescription}
             onChange={(event) => setNewTaskDescription(event.currentTarget.value)}
-            minRows={3}
+            minRows={5}
+            autosize
           />
           <Select
             data-test-id="add-task-status-select"
