@@ -60,10 +60,35 @@ export JWT_SECRET="replace-with-a-strong-secret"
 - `pnpm dev` - run client and server together
 - `pnpm build` - build both apps
 - `pnpm start` - run compiled server
+- `pnpm openai:query "Hello"` - run a simple OpenAI prompt from the terminal
+- `pnpm openai:playwright "Open example.com and tell me the title"` - run an OpenAI prompt through a local Playwright MCP server
 - `pnpm test:e2e` - run Playwright tests
 - `pnpm test:e2e:headed` - run Playwright in headed mode
 - `pnpm test:e2e:ui` - run Playwright UI mode
 - `pnpm test:e2e:install` - install Playwright browsers
+
+## OpenAI example
+
+Set your API key:
+
+```bash
+export OPENAI_API_KEY="your_api_key_here"
+```
+
+Run a simple prompt:
+
+```bash
+pnpm openai:query "Write one short sentence about productive task management."
+```
+
+Run a prompt with a local Playwright MCP server:
+
+```bash
+export PLAYWRIGHT_MCP_URL="http://localhost:8931/mcp"
+pnpm openai:playwright "Open https://example.com and tell me the page title."
+```
+
+This script acts as the MCP client locally. It connects to your local Playwright MCP server, exposes the discovered MCP tools to OpenAI as function tools, executes tool calls on your machine, and sends the tool results back to the model.
 
 ## E2E tests
 
