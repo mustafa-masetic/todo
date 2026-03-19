@@ -7,6 +7,8 @@
     "dev": "concurrently -n client,server -c cyan,green \"pnpm --filter ./client dev\" \"pnpm --filter ./server dev\"",
     "build": "pnpm --filter ./client build && pnpm --filter ./server build",
     "start": "pnpm --filter ./server start",
+    "openai:query": "node ./scripts/openai-query.mjs",
+    "openai:playwright": "node ./scripts/openai-playwright.mjs",
     "create:data": "node ./scripts/create-data.mjs",
     "data:create": "pnpm run create:data",
     "create-data": "pnpm run create:data",
@@ -21,5 +23,10 @@
   "devDependencies": {
     "@playwright/test": "^1.52.0",
     "concurrently": "^9.1.2"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.27.1",
+    "openai": "^6.32.0",
+    "zod": "^4.3.6"
   }
 }

@@ -54,7 +54,7 @@ import {
   IconUsers,
   IconWriting
 } from "@tabler/icons-react";
-import { useEffect, useMemo, useRef, useState, type MutableRefObject } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent, type MutableRefObject } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   acceptInvite,
@@ -303,6 +303,10 @@ function App() {
     label: string;
   } | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const drawerCloseButtonProps = {
+    "data-test-id": "drawer-close-button",
+    "aria-label": "Close navigation"
+  };
   const isMobile = useMediaQuery("(max-width: 48em)");
   const globalSearchInputRef = useRef<HTMLInputElement>(null);
   const inviteSearchInputRef = useRef<HTMLInputElement>(null);
@@ -650,6 +654,20 @@ function App() {
       });
     }
   });
+
+  const handleAuthSubmit = (event?: FormEvent<HTMLFormElement>) => {
+    event?.preventDefault();
+
+    if (!authCanSubmit || authMutation.isPending) {
+      return;
+    }
+
+    authMutation.mutate({
+      mode: authMode,
+      profile: profileForm,
+      passwordValue: password
+    });
+  };
 
   const updateProfileMutation = useMutation({
     mutationFn: (payload: ProfilePayload) => updateMe(payload),
@@ -1794,10 +1812,7 @@ function App() {
         title="Navigation"
         position="left"
         size="86%"
-        closeButtonProps={{
-          "data-test-id": "drawer-close-button",
-          "aria-label": "Close navigation"
-        }}
+        closeButtonProps={drawerCloseButtonProps}
       >
         <Stack gap="xs">
           <Button
@@ -1934,113 +1949,109 @@ function App() {
 
             {!sessionToken && (currentPath === "/login" || currentPath === "/register") ? (
               <Card radius="lg" shadow="sm" withBorder className="surface-card">
-                <Stack gap="sm">
-                  <Title order={3} c="var(--app-title)">
-                    {authMode === "register" ? "Create account" : "Sign in"}
-                  </Title>
-                  <Group gap="xs">
-                    <Button
-                      variant={authMode === "login" ? "filled" : "light"}
-                      onClick={() => navigateTo("/login")}
-                    >
-                      Login
-                    </Button>
-                    <Button
-                      data-test-id="hero-register-button"
-                      variant={authMode === "register" ? "filled" : "light"}
-                      leftSection={<IconUserPlus size={16} />}
-                      onClick={() => navigateTo("/register")}
-                    >
-                      Register
-                    </Button>
-                  </Group>
-
-                  {authMode === "register" ? (
-                    <Group grow>
-                      <TextInput
-                        data-test-id="auth-first-name-input"
-                        label="First Name"
-                        value={profileForm.firstName}
-                        onChange={(event) => {
-                          const value = event.currentTarget.value;
-                          setProfileForm((prev) => ({
-                            ...prev,
-                            firstName: value
-                          }));
-                        }}
-                        className="todo-input"
-                      />
-                      <TextInput
-                        data-test-id="auth-last-name-input"
-                        label="Last Name"
-                        value={profileForm.lastName}
-                        onChange={(event) => {
-                          const value = event.currentTarget.value;
-                          setProfileForm((prev) => ({
-                            ...prev,
-                            lastName: value
-                          }));
-                        }}
-                        className="todo-input"
-                      />
+                <Box component="form" onSubmit={handleAuthSubmit}>
+                  <Stack gap="sm">
+                    <Title order={3} c="var(--app-title)">
+                      {authMode === "register" ? "Create account" : "Sign in"}
+                    </Title>
+                    <Group gap="xs">
+                      <Button
+                        variant={authMode === "login" ? "filled" : "light"}
+                        onClick={() => navigateTo("/login")}
+                      >
+                        Login
+                      </Button>
+                      <Button
+                        data-test-id="hero-register-button"
+                        variant={authMode === "register" ? "filled" : "light"}
+                        leftSection={<IconUserPlus size={16} />}
+                        onClick={() => navigateTo("/register")}
+                      >
+                        Register
+                      </Button>
                     </Group>
-                  ) : null}
 
-                  <TextInput
-                    data-test-id="auth-email-input"
-                    label="Email"
-                    placeholder="you@example.com"
-                    value={profileForm.email}
-                    onChange={(event) => {
-                      const value = event.currentTarget.value;
-                      setProfileForm((prev) => ({
-                        ...prev,
-                        email: value
-                      }));
-                    }}
-                    className="todo-input"
-                  />
+                    {authMode === "register" ? (
+                      <Group grow>
+                        <TextInput
+                          data-test-id="auth-first-name-input"
+                          label="First Name"
+                          value={profileForm.firstName}
+                          onChange={(event) => {
+                            const value = event.currentTarget.value;
+                            setProfileForm((prev) => ({
+                              ...prev,
+                              firstName: value
+                            }));
+                          }}
+                          className="todo-input"
+                        />
+                        <TextInput
+                          data-test-id="auth-last-name-input"
+                          label="Last Name"
+                          value={profileForm.lastName}
+                          onChange={(event) => {
+                            const value = event.currentTarget.value;
+                            setProfileForm((prev) => ({
+                              ...prev,
+                              lastName: value
+                            }));
+                          }}
+                          className="todo-input"
+                        />
+                      </Group>
+                    ) : null}
 
-                  {authMode === "register" ? (
-                    <Select
-                      data-test-id="auth-gender-select"
-                      label="Gender"
-                      className="todo-input"
-                      data={genderOptions}
-                      value={profileForm.gender}
-                      onChange={(value) => {
-                        if (!value) {
-                          return;
-                        }
-                        setProfileForm((prev) => ({ ...prev, gender: value as Gender }));
+                    <TextInput
+                      data-test-id="auth-email-input"
+                      label="Email"
+                      placeholder="you@example.com"
+                      value={profileForm.email}
+                      onChange={(event) => {
+                        const value = event.currentTarget.value;
+                        setProfileForm((prev) => ({
+                          ...prev,
+                          email: value
+                        }));
                       }}
+                      className="todo-input"
                     />
-                  ) : null}
 
-                  <PasswordInput
-                    data-test-id="auth-password-input"
-                    label="Password"
-                    placeholder="At least 8 characters"
-                    value={password}
-                    onChange={(event) => setPassword(event.currentTarget.value)}
-                    className="todo-input"
-                  />
-                  <Button
-                    data-test-id="auth-submit-button"
-                    className="add-button"
-                    loading={authMutation.isPending}
-                    disabled={!authCanSubmit}
-                    onClick={() =>
-                      authMutation.mutate({
-                        mode: authMode,
-                        profile: profileForm,
-                        passwordValue: password
-                      })
-                    }
-                  >
-                    {authMode === "register" ? "Create account" : "Sign in"}
-                  </Button>
-                </Stack>
+                    {authMode === "register" ? (
+                      <Select
+                        data-test-id="auth-gender-select"
+                        label="Gender"
+                        className="todo-input"
+                        data={genderOptions}
+                        value={profileForm.gender}
+                        onChange={(value) => {
+                          if (!value) {
+                            return;
+                          }
+                          setProfileForm((prev) => ({ ...prev, gender: value as Gender }));
+                        }}
+                      />
+                    ) : null}
+
+                    <PasswordInput
+                      data-test-id="auth-password-input"
+                      label="Password"
+                      placeholder="At least 8 characters"
+                      value={password}
+                      onChange={(event) => setPassword(event.currentTarget.value)}
+                      className="todo-input"
+                    />
+                    <Button
+                      data-test-id="auth-submit-button"
+                      className="add-button"
+                      type="submit"
+                      loading={authMutation.isPending}
+                      disabled={!authCanSubmit}
+                    >
+                      {authMode === "register" ? "Create account" : "Sign in"}
+                    </Button>
+                  </Stack>
+                </Box>
               </Card>
             ) : null}
 
