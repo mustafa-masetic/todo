@@ -325,6 +325,158 @@ body {
   margin-left: auto;
 }
 
+.home-dashboard {
+  padding-top: 10px;
+}
+
+.home-hero-card {
+  padding: 24px 28px;
+}
+
+.home-hero-layout {
+  min-height: 100px;
+}
+
+.home-hero-title {
+  margin: 0;
+  font-size: clamp(2rem, 4vw, 2.8rem);
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+}
+
+.home-hero-subtitle {
+  margin-top: 10px;
+  max-width: 640px;
+  color: color-mix(in srgb, var(--app-subtitle) 88%, transparent);
+  font-size: 1.05rem;
+}
+
+.home-hero-button {
+  min-width: 152px;
+  height: 44px;
+  border-radius: 14px;
+}
+
+.home-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.home-stat-card {
+  padding: 20px;
+}
+
+.home-stat-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  color: #22d3ee;
+  background: color-mix(in srgb, #22d3ee 18%, var(--app-surface));
+}
+
+.home-stat-value {
+  margin: 0;
+  font-size: 2rem;
+  line-height: 1;
+  font-weight: 700;
+  color: var(--app-title);
+}
+
+.home-stat-label {
+  margin-top: 6px;
+  color: color-mix(in srgb, var(--app-subtitle) 88%, transparent);
+}
+
+.home-invites-card {
+  padding: 20px 22px;
+}
+
+.home-invite-row {
+  align-items: flex-start;
+  padding: 12px 0;
+  border-top: 1px solid color-mix(in srgb, var(--app-border) 72%, transparent);
+}
+
+.home-invite-row:first-of-type {
+  border-top: 0;
+  padding-top: 4px;
+}
+
+.home-invite-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.home-invite-review-button {
+  flex-shrink: 0;
+  margin-left: 16px;
+  min-width: 88px;
+}
+
+.home-section-title {
+  margin: 0;
+  font-size: 2rem;
+  letter-spacing: -0.03em;
+}
+
+.home-section-link {
+  padding-right: 0;
+  color: #67e8f9;
+}
+
+.home-spaces-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.home-space-card {
+  min-height: 188px;
+  padding: 18px 20px;
+}
+
+.home-space-title {
+  line-height: 1.15;
+}
+
+.home-space-role {
+  flex-shrink: 0;
+}
+
+.home-space-footer {
+  margin-top: 8px;
+  padding-top: 14px;
+  border-top: 1px solid color-mix(in srgb, var(--app-border) 72%, transparent);
+}
+
+.home-space-arrow {
+  font-size: 1.25rem;
+  color: #67e8f9;
+}
+
+.home-recent-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.home-recent-row {
+  padding: 26px 20px;
+  cursor: pointer;
+  transition: background-color 140ms ease;
+}
+
+.home-recent-row.is-bordered {
+  border-top: 1px solid color-mix(in srgb, var(--app-border) 72%, transparent);
+}
+
+.home-recent-row:hover {
+  background: color-mix(in srgb, var(--app-surface) 88%, #22d3ee 12%);
+}
+
 @keyframes ctaPulse {
   0%,
   100% {
@@ -410,8 +562,38 @@ body {
     border-top: 1px solid color-mix(in srgb, var(--app-border) 72%, transparent);
   }
 
+  .home-hero-card {
+    padding: 22px 20px;
+  }
+
+  .home-hero-layout {
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .home-stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .home-spaces-grid {
+    grid-template-columns: 1fr;
+  }
+
   .task-detail-controls .mantine-Button-root {
     min-height: 38px;
+  }
+}
+
+@media (max-width: 75em) {
+  .home-spaces-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 56em) {
+  .home-hero-layout {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
 

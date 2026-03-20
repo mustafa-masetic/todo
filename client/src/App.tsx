@@ -58,6 +58,7 @@ import { useEffect, useMemo, useRef, useState, type FormEvent, type MutableRefOb
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   acceptInvite,
+  declineInvite,
   changePassword,
   clearStoredToken,
   createSpace,
@@ -105,6 +106,7 @@ import type {
   AuthResponse,
   Gender,
   PreferredTheme,
+  SpaceInvite,
   TaskStatus
 } from "./types";
 
@@ -213,6 +215,7 @@ function App() {
     window.location.pathname === "/spaces" ? parsePageFromSearch(window.location.search) : 1
   );
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
+  const [homeInvitePreview, setHomeInvitePreview] = useState<SpaceInvite | null>(null);
   const [inviteSearchValue, setInviteSearchValue] = useState("");
   const [debouncedInviteSearch, setDebouncedInviteSearch] = useState("");
   const [selectedSpaceId, setSelectedSpaceId] = useState<number | null>(
@@ -799,6 +802,7 @@ function App() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["spaces"] });
       queryClient.invalidateQueries({ queryKey: ["invites"] });
+      setHomeInvitePreview(null);
       notifications.show({
         color: "teal",
         title: "Invite accepted",
@@ -809,6 +813,26 @@ function App() {
       notifications.show({
         color: "red",
         title: "Could not accept invite",
+        message: error.message
+      });
+    }
+  });
+
+  const declineInviteMutation = useMutation({
+    mutationFn: declineInvite,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["invites"] });
+      setHomeInvitePreview(null);
+      notifications.show({
+        color: "yellow",
+        title: "Invite declined",
+        message: "The invitation has been removed from your pending list."
+      });
+    },
+    onError: (error: Error) => {
+      notifications.show({
+        color: "red",
+        title: "Could not decline invite",
         message: error.message
       });
     }
@@ -1169,6 +1193,16 @@ function App() {
     globalSpaceSearchCacheRef.current = globalSpaceResults;
     return globalSpaceResults;
   }, [globalSpaceResults]);
+  const homePendingInviteCount = (invitesQuery.data ?? []).length;
+  const homeSpaceCount = (spacesQuery.data ?? []).length;
+  const homeOpenTaskCount = useMemo(
+    () => (spacesQuery.data ?? []).reduce((total, space) => total + space.openTaskCount, 0),
+    [spacesQuery.data]
+  );
+  const homeDoneTaskCount = useMemo(
+    () => (spacesQuery.data ?? []).reduce((total, space) => total + space.doneTaskCount, 0),
+    [spacesQuery.data]
+  );
   const globalSearchResults = useMemo(() => {
     if (trimmedGlobalSearch.length < 2) {
       return [];
@@ -2062,80 +2096,131 @@ function App() {
             ) : null}
 
             {meQuery.data && currentPath === "/" ? (
-              <Stack gap="md">
-                <Card withBorder className="surface-card">
-                  <Stack gap="sm">
-                    <Title order={2} c="var(--app-title)">
-                      Your overview
+              <Stack gap="xl" className="home-dashboard">
+                <Card withBorder className="surface-card home-hero-card">
+                  <Group justify="space-between" align="center" className="home-hero-layout">
+                    <Box>
+                      <Title order={1} className="home-hero-title">
+                        Welcome back{meQuery.data.firstName ? `, ${meQuery.data.firstName}` : ""}
+                      </Title>
+                      <Text className="home-hero-subtitle">
+                        Here&apos;s what&apos;s happening with your projects today.
+                      </Text>
+                    </Box>
+                    <Button
+                      className="add-button home-hero-button"
+                      leftSection={<IconPlus size={18} />}
+                      onClick={() => setSpaceModalOpen(true)}
+                    >
+                      New Space
+                    </Button>
+                  </Group>
+                </Card>
+
+                <Box className="home-stats-grid">
+                  <Card withBorder className="surface-card home-stat-card">
+                    <Group wrap="nowrap" gap="md">
+                      <Box className="home-stat-icon">
+                        <IconUserPlus size={20} />
+                      </Box>
+                      <Box>
+                        <Text className="home-stat-value">{homePendingInviteCount}</Text>
+                        <Text className="home-stat-label">Pending Invitations</Text>
+                      </Box>
+                    </Group>
+                  </Card>
+                  <Card withBorder className="surface-card home-stat-card">
+                    <Group wrap="nowrap" gap="md">
+                      <Box className="home-stat-icon">
+                        <IconWriting size={20} />
+                      </Box>
+                      <Box>
+                        <Text className="home-stat-value">{homeOpenTaskCount}</Text>
+                        <Text className="home-stat-label">Open Tasks</Text>
+                      </Box>
+                    </Group>
+                  </Card>
+                  <Card withBorder className="surface-card home-stat-card">
+                    <Group wrap="nowrap" gap="md">
+                      <Box className="home-stat-icon">
+                        <IconCheck size={20} />
+                      </Box>
+                      <Box>
+                        <Text className="home-stat-value">{homeDoneTaskCount}</Text>
+                        <Text className="home-stat-label">Completed Tasks</Text>
+                      </Box>
+                    </Group>
+                  </Card>
+                </Box>
+
+                {invitesQuery.isLoading ? (
+                  <Group justify="center" py="sm">
+                    <Loader size="sm" />
+                  </Group>
+                ) : homePendingInviteCount > 0 ? (
+                  <Card withBorder className="surface-card home-invites-card">
+                    <Stack gap="sm">
+                      <Group justify="space-between" align="center">
+                        <Title order={4}>Pending Invitations</Title>
+                        <Badge variant="filled" className="stats-badge">
+                          {homePendingInviteCount}
+                        </Badge>
+                      </Group>
+                      {(invitesQuery.data ?? []).slice(0, 3).map((invite) => (
+                        <Group
+                          key={invite.id}
+                          justify="space-between"
+                          align="flex-start"
+                          wrap="nowrap"
+                          className="home-invite-row"
+                        >
+                          <Box className="home-invite-copy">
+                            <Text fw={600} c="var(--app-text)">
+                              {invite.spaceName}
+                            </Text>
+                            <Text size="sm" c="var(--app-subtitle)">
+                              Invited by {invite.invitedByEmail}
+                            </Text>
+                          </Box>
+                          <Button
+                            data-test-id={`invitation-preview-button-${invite.id}`}
+                            size="xs"
+                            variant="light"
+                            className="home-invite-review-button"
+                            onClick={() => setHomeInvitePreview(invite)}
+                          >
+                            Review
+                          </Button>
+                        </Group>
+                      ))}
+                    </Stack>
+                  </Card>
+                ) : null}
+
+                <Stack gap="md">
+                  <Group justify="space-between" align="center">
+                    <Title order={2} className="home-section-title">
+                      Your Spaces
                     </Title>
-                    <Group gap="xs">
-                      <Badge variant="filled" className="stats-badge">
-                        {(invitesQuery.data ?? []).length} invites
-                      </Badge>
-                      <Badge variant="filled" className="stats-badge">
-                        {(spacesQuery.data ?? []).length} spaces
-                      </Badge>
-                      <Badge variant="filled" className="stats-badge">
-                        {homeTasksQuery.data?.total ?? 0} tasks
-                      </Badge>
-                    </Group>
-                  </Stack>
-                </Card>
-
-                <Card withBorder className="surface-card">
-                  <Stack gap="sm">
-                    <Group justify="space-between" align="center">
-                      <Title order={4}>Invitations</Title>
-                    </Group>
-                    {invitesQuery.isLoading ? (
+                    <Button variant="subtle" className="home-section-link" onClick={() => navigateTo("/spaces")}>
+                      View All
+                    </Button>
+                  </Group>
+                  {spacesQuery.isLoading ? (
+                    <Group justify="center" py="sm">
                       <Loader size="sm" />
-                    ) : (invitesQuery.data ?? []).length === 0 ? (
-                      <Text c="var(--app-subtitle)">No pending invitations.</Text>
-                    ) : (
-                      (invitesQuery.data ?? []).map((invite) => (
-                        <Card key={invite.id} withBorder className="surface-card">
-                          <Group justify="space-between" align="center">
-                            <Box>
-                              <Text fw={600} c="var(--app-text)">
-                                {invite.spaceName}
-                              </Text>
-                              <Text size="sm" c="var(--app-subtitle)">
-                                Invited by {invite.invitedByEmail}
-                              </Text>
-                            </Box>
-                            <Button
-                              data-test-id="invitation-accept-button"
-                              size="xs"
-                              loading={acceptInviteMutation.isPending}
-                              onClick={() => acceptInviteMutation.mutate(invite.id)}
-                            >
-                              Accept
-                            </Button>
-                          </Group>
-                        </Card>
-                      ))
-                    )}
-                  </Stack>
-                </Card>
-
-                <Card withBorder className="surface-card">
-                  <Stack gap="sm">
-                    <Group justify="space-between" align="center">
-                      <Title order={4}>Spaces</Title>
-                      <Button variant="light" size="xs" onClick={() => navigateTo("/spaces")}>
-                        View all
-                      </Button>
                     </Group>
-                    {spacesQuery.isLoading ? (
-                      <Loader size="sm" />
-                    ) : (spacesQuery.data ?? []).length === 0 ? (
+                  ) : homeSpaceCount === 0 ? (
+                    <Card withBorder className="surface-card">
                       <Text c="var(--app-subtitle)">No spaces yet.</Text>
-                    ) : (
-                      (spacesQuery.data ?? []).slice(0, 6).map((space) => (
+                    </Card>
+                  ) : (
+                    <Box className="home-spaces-grid">
+                      {(spacesQuery.data ?? []).slice(0, 4).map((space) => (
                         <Card
                           key={space.id}
                           withBorder
-                          className="surface-card task-clickable-card"
+                          className="surface-card home-space-card task-clickable-card"
                           tabIndex={0}
                           onClick={() =>
                             navigateTo(`/spaces/${slugifySpaceName(space.name)}/tasks`)
@@ -2147,78 +2232,80 @@ function App() {
                             }
                           }}
                         >
-                          <Group justify="space-between" align="center">
-                            <Box>
-                              <Text fw={600} c="var(--app-text)">
-                                {space.name}
-                              </Text>
+                          <Stack justify="space-between" h="100%">
+                            <Stack gap="sm">
+                              <Group justify="space-between" align="flex-start" wrap="nowrap">
+                                <Text fw={700} size="lg" c="var(--app-text)" className="home-space-title">
+                                  {space.name}
+                                </Text>
+                                <Badge
+                                  variant="light"
+                                  color={space.role === "owner" ? "teal" : "gray"}
+                                  className="home-space-role"
+                                >
+                                  {space.role === "owner" ? "Owner" : "Member"}
+                                </Badge>
+                              </Group>
                               <Text size="sm" c="var(--app-subtitle)" className="multiline-preview">
                                 {space.description || "No description"}
                               </Text>
-                            </Box>
-                            <Badge
-                              variant="light"
-                              color={space.role === "owner" ? "teal" : "gray"}
-                            >
-                              {space.role === "owner" ? "Owner" : "Member"}
-                            </Badge>
-                          </Group>
+                            </Stack>
+                            <Group justify="space-between" align="center" className="home-space-footer">
+                              <Text size="sm" c="var(--app-subtitle)">
+                                {space.memberCount} members
+                              </Text>
+                              <Text className="home-space-arrow">→</Text>
+                            </Group>
+                          </Stack>
                         </Card>
-                      ))
-                    )}
-                  </Stack>
-                </Card>
+                      ))}
+                    </Box>
+                  )}
+                </Stack>
 
-                <Card withBorder className="surface-card">
-                  <Stack gap="sm">
-                    <Group justify="space-between" align="center">
-                      <Title order={4}>Tasks</Title>
-                      <Button variant="light" size="xs" onClick={() => navigateTo("/tasks")}>
-                        View all
-                      </Button>
-                    </Group>
+                <Stack gap="md">
+                  <Group justify="space-between" align="center">
+                    <Title order={2} className="home-section-title">
+                      Recent Tasks
+                    </Title>
+                    <Button variant="subtle" className="home-section-link" onClick={() => navigateTo("/tasks")}>
+                      View All
+                    </Button>
+                  </Group>
+                  <Card withBorder className="surface-card home-recent-card">
                     {homeTasksQuery.isLoading ? (
-                      <Loader size="sm" />
+                      <Group justify="center" py="sm">
+                        <Loader size="sm" />
+                      </Group>
                     ) : (homeTasksQuery.data?.items ?? []).length === 0 ? (
                       <Text c="var(--app-subtitle)">No tasks yet.</Text>
                     ) : (
-                      (homeTasksQuery.data?.items ?? []).map((item) => (
-                        <Card
-                          key={`${item.spaceId}-${item.id}`}
-                          withBorder
-                          className="surface-card task-clickable-card"
-                          onClick={() => navigateTo(`/tasks/${item.id}`)}
-                          tabIndex={0}
-                          onKeyDown={(event) => {
-                            if (event.key === "Enter" || event.key === " ") {
-                              event.preventDefault();
-                              navigateTo(`/tasks/${item.id}`);
-                            }
-                          }}
-                        >
-                          <Group justify="space-between" align="center">
-                            <Box>
-                              <Text fw={600} c="var(--app-text)">
-                                {item.title}
-                              </Text>
-                              <Text size="sm" c="var(--app-subtitle)" className="multiline-preview">
-                                {item.description || "No description"}
-                              </Text>
-                              <Tooltip label={`Space: ${item.spaceName}`} openDelay={200}>
-                                <Badge mt={6} variant="light" color="indigo">
-                                  {truncateText(item.spaceName, 24)}
-                                </Badge>
-                              </Tooltip>
-                            </Box>
-                            <Badge variant="light" color={taskStatusMeta[item.status].color}>
-                              {taskStatusMeta[item.status].label}
-                            </Badge>
-                          </Group>
-                        </Card>
-                      ))
+                      <Stack gap={0}>
+                        {(homeTasksQuery.data?.items ?? []).slice(0, 5).map((item, index) => (
+                          <Box
+                            key={`${item.spaceId}-${item.id}`}
+                            className={`home-recent-row ${index > 0 ? "is-bordered" : ""}`}
+                            onClick={() => navigateTo(`/tasks/${item.id}`)}
+                          >
+                            <Group justify="space-between" align="flex-start" wrap="nowrap">
+                              <Box>
+                                <Text fw={700} size="lg" c="var(--app-text)">
+                                  {item.title}
+                                </Text>
+                                <Text size="md" c="var(--app-subtitle)">
+                                  {item.spaceName}
+                                </Text>
+                              </Box>
+                              <Badge variant="light" color={taskStatusMeta[item.status].color}>
+                                {taskStatusMeta[item.status].label}
+                              </Badge>
+                            </Group>
+                          </Box>
+                        ))}
+                      </Stack>
                     )}
-                  </Stack>
-                </Card>
+                  </Card>
+                </Stack>
               </Stack>
             ) : null}
 
@@ -4341,6 +4428,52 @@ function App() {
             )}
           </Box>
         </Stack>
+      </Modal>
+      <Modal
+        opened={Boolean(homeInvitePreview)}
+        onClose={() => setHomeInvitePreview(null)}
+        title="Review invitation"
+        centered
+      >
+        {homeInvitePreview ? (
+          <Stack gap="md">
+            <Box>
+              <Text fw={700} size="lg" c="var(--app-text)">
+                {homeInvitePreview.spaceName}
+              </Text>
+              <Text mt={4} c="var(--app-subtitle)">
+                Invited by {homeInvitePreview.invitedByEmail}
+              </Text>
+            </Box>
+            <Card withBorder className="surface-card">
+              <Stack gap="xs">
+                <Text fw={600} c="var(--app-text)">
+                  Space preview
+                </Text>
+                <Text c="var(--app-subtitle)" style={{ whiteSpace: "pre-wrap" }}>
+                  {homeInvitePreview.spaceDescription || "No description provided."}
+                </Text>
+              </Stack>
+            </Card>
+            <Group justify="space-between" wrap="nowrap">
+              <Button
+                variant="light"
+                color="red"
+                loading={declineInviteMutation.isPending}
+                onClick={() => declineInviteMutation.mutate(homeInvitePreview.id)}
+              >
+                Decline
+              </Button>
+              <Button
+                data-test-id="invitation-accept-button"
+                loading={acceptInviteMutation.isPending}
+                onClick={() => acceptInviteMutation.mutate(homeInvitePreview.id)}
+              >
+                Accept invitation
+              </Button>
+            </Group>
+          </Stack>
+        ) : null}
       </Modal>
       <Modal
         data-test-id="invite-modal"

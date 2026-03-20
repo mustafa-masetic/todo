@@ -655,7 +655,7 @@ app.post("/api/invites/:inviteId/accept", requireAuth, (req, res) => {
   }
 
   const invite = inviteQueries.getInviteById.get(inviteId) as
-    | { id: number; spaceId: number; email: string; status: "pending" | "accepted" }
+    | { id: number; spaceId: number; email: string; status: "pending" | "accepted" | "declined" }
     | undefined;
 
   if (!invite) {
@@ -681,6 +681,44 @@ app.post("/api/invites/:inviteId/accept", requireAuth, (req, res) => {
 
   spaceQueries.addMember.run(invite.spaceId, authReq.authUser.userId, "member");
   inviteQueries.acceptInvite.run(invite.id);
+  res.json({ ok: true });
+});
+
+app.post("/api/invites/:inviteId/decline", requireAuth, (req, res) => {
+  const authReq = req as AuthedRequest;
+  const inviteId = Number(req.params.inviteId);
+
+  if (Number.isNaN(inviteId)) {
+    res.status(400).json({ message: "Invalid invite id." });
+    return;
+  }
+
+  const invite = inviteQueries.getInviteById.get(inviteId) as
+    | { id: number; spaceId: number; email: string; status: "pending" | "accepted" | "declined" }
+    | undefined;
+
+  if (!invite) {
+    res.status(404).json({ message: "Invite not found." });
+    return;
+  }
+
+  const user = userQueries.getById.get(authReq.authUser.userId) as User | undefined;
+  if (!user) {
+    res.status(404).json({ message: "User not found." });
+    return;
+  }
+
+  if (invite.email !== user.email) {
+    res.status(403).json({ message: "This invite is not for your account." });
+    return;
+  }
+
+  if (invite.status !== "pending") {
+    res.status(409).json({ message: "Invite has already been handled." });
+    return;
+  }
+
+  inviteQueries.declineInvite.run(invite.id);
   res.json({ ok: true });
 });
 

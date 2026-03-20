@@ -83,12 +83,13 @@ export type SpaceInvite = {
   id: number;
   spaceId: number;
   spaceName: string;
+  spaceDescription: string;
   email: string;
   invitedFirstName: string;
   invitedLastName: string;
   invitedByUserId: number;
   invitedByEmail: string;
-  status: "pending" | "accepted";
+  status: "pending" | "accepted" | "declined";
   createdAt: string;
 };
 

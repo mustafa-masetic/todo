@@ -340,6 +340,12 @@ export function acceptInvite(inviteId: number): Promise<{ ok: true }> {
   });
 }
 
+export function declineInvite(inviteId: number): Promise<{ ok: true }> {
+  return apiRequest<{ ok: true }>(`/api/invites/${inviteId}/decline`, {
+    method: "POST"
+  });
+}
+
 export function getTodos(spaceId: number): Promise<Todo[]> {
   return apiRequest<Todo[]>(`/api/spaces/${spaceId}/todos`);
 }

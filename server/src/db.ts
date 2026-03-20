@@ -57,12 +57,13 @@ export type SpaceInvite = {
   id: number;
   spaceId: number;
   spaceName: string;
+  spaceDescription: string;
   email: string;
   invitedFirstName: string;
   invitedLastName: string;
   invitedByUserId: number;
   invitedByEmail: string;
-  status: "pending" | "accepted";
+  status: "pending" | "accepted" | "declined";
   createdAt: string;
 };
 
@@ -470,6 +471,7 @@ export const inviteQueries = {
       si.id,
       si.space_id as spaceId,
       s.name as spaceName,
+      s.description as spaceDescription,
       si.email,
       COALESCE(invited.first_name, '') as invitedFirstName,
       COALESCE(invited.last_name, '') as invitedLastName,
@@ -489,6 +491,7 @@ export const inviteQueries = {
       si.id,
       si.space_id as spaceId,
       s.name as spaceName,
+      s.description as spaceDescription,
       si.email,
       COALESCE(invited.first_name, '') as invitedFirstName,
       COALESCE(invited.last_name, '') as invitedLastName,
@@ -510,6 +513,10 @@ export const inviteQueries = {
   ),
   acceptInvite: db.prepare(
     `UPDATE space_invites SET status = 'accepted', responded_at = datetime('now')
+     WHERE id = ?`
+  ),
+  declineInvite: db.prepare(
+    `UPDATE space_invites SET status = 'declined', responded_at = datetime('now')
      WHERE id = ?`
   )
 };
