@@ -58,6 +58,10 @@ export type SpaceInvite = {
   spaceId: number;
   spaceName: string;
   spaceDescription: string;
+  memberCount: number;
+  totalTaskCount: number;
+  doneTaskCount: number;
+  openTaskCount: number;
   email: string;
   invitedFirstName: string;
   invitedLastName: string;
@@ -472,6 +476,10 @@ export const inviteQueries = {
       si.space_id as spaceId,
       s.name as spaceName,
       s.description as spaceDescription,
+      (SELECT COUNT(*) FROM space_members sm WHERE sm.space_id = s.id) as memberCount,
+      (SELECT COUNT(*) FROM todos t WHERE t.space_id = s.id) as totalTaskCount,
+      (SELECT COUNT(*) FROM todos t WHERE t.space_id = s.id AND t.status = 'done') as doneTaskCount,
+      (SELECT COUNT(*) FROM todos t WHERE t.space_id = s.id AND t.status != 'done') as openTaskCount,
       si.email,
       COALESCE(invited.first_name, '') as invitedFirstName,
       COALESCE(invited.last_name, '') as invitedLastName,
@@ -492,6 +500,10 @@ export const inviteQueries = {
       si.space_id as spaceId,
       s.name as spaceName,
       s.description as spaceDescription,
+      (SELECT COUNT(*) FROM space_members sm WHERE sm.space_id = s.id) as memberCount,
+      (SELECT COUNT(*) FROM todos t WHERE t.space_id = s.id) as totalTaskCount,
+      (SELECT COUNT(*) FROM todos t WHERE t.space_id = s.id AND t.status = 'done') as doneTaskCount,
+      (SELECT COUNT(*) FROM todos t WHERE t.space_id = s.id AND t.status != 'done') as openTaskCount,
       si.email,
       COALESCE(invited.first_name, '') as invitedFirstName,
       COALESCE(invited.last_name, '') as invitedLastName,

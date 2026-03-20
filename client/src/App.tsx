@@ -1203,6 +1203,16 @@ function App() {
     () => (spacesQuery.data ?? []).reduce((total, space) => total + space.doneTaskCount, 0),
     [spacesQuery.data]
   );
+  const homePrimaryActionLabel =
+    homeSpaceCount === 0 ? "Create your first space" : "Add Task";
+  const totalSpaceMembers = useMemo(
+    () => (spacesQuery.data ?? []).reduce((total, space) => total + space.memberCount, 0),
+    [spacesQuery.data]
+  );
+  const activeSpacesCount = useMemo(
+    () => (spacesQuery.data ?? []).filter((space) => space.openTaskCount > 0).length,
+    [spacesQuery.data]
+  );
   const globalSearchResults = useMemo(() => {
     if (trimmedGlobalSearch.length < 2) {
       return [];
@@ -2110,9 +2120,16 @@ function App() {
                     <Button
                       className="add-button home-hero-button"
                       leftSection={<IconPlus size={18} />}
-                      onClick={() => setSpaceModalOpen(true)}
+                      onClick={() => {
+                        if (homeSpaceCount === 0) {
+                          setSpaceModalOpen(true);
+                          return;
+                        }
+
+                        setTaskModalOpen(true);
+                      }}
                     >
-                      New Space
+                      {homePrimaryActionLabel}
                     </Button>
                   </Group>
                 </Card>
@@ -2211,7 +2228,7 @@ function App() {
                       <Loader size="sm" />
                     </Group>
                   ) : homeSpaceCount === 0 ? (
-                    <Card withBorder className="surface-card">
+                    <Card withBorder className="surface-card home-empty-card">
                       <Text c="var(--app-subtitle)">No spaces yet.</Text>
                     </Card>
                   ) : (
@@ -2278,7 +2295,9 @@ function App() {
                         <Loader size="sm" />
                       </Group>
                     ) : (homeTasksQuery.data?.items ?? []).length === 0 ? (
-                      <Text c="var(--app-subtitle)">No tasks yet.</Text>
+                      <Box className="home-empty-card">
+                        <Text c="var(--app-subtitle)">No tasks yet.</Text>
+                      </Box>
                     ) : (
                       <Stack gap={0}>
                         {(homeTasksQuery.data?.items ?? []).slice(0, 5).map((item, index) => (
@@ -3039,81 +3058,119 @@ function App() {
             ) : null}
 
             {meQuery.data && currentPath === "/spaces" ? (
-              <Stack gap="md">
-                <Card radius="lg" withBorder className="surface-card spaces-subnav-panel">
-                  <Stack gap="sm">
-                    <Group justify="space-between" align="center" wrap="nowrap">
-                      <TextInput
-                        data-test-id="spaces-search-input"
-                        className="todo-input"
-                        placeholder="Search spaces by name or description"
-                        leftSection={<IconSearch size={16} />}
-                        value={spacesSearch}
-                        onChange={(event) => setSpacesSearch(event.currentTarget.value)}
-                        style={{ flex: 1 }}
-                      />
-                      <Button
-                        data-test-id="spaces-create-button"
-                        className="add-button"
-                        leftSection={<IconPlus size={16} />}
-                        onClick={() => setSpaceModalOpen(true)}
-                      >
-                        New Space
-                      </Button>
-                    </Group>
+              <Stack gap="xl" className="spaces-dashboard">
+                <Group justify="space-between" align="center" wrap="nowrap" className="spaces-toolbar">
+                  <TextInput
+                    data-test-id="spaces-search-input"
+                    className="spaces-search-input"
+                    placeholder="Search spaces by name or description"
+                    leftSection={<IconSearch size={16} />}
+                    value={spacesSearch}
+                    onChange={(event) => setSpacesSearch(event.currentTarget.value)}
+                  />
+                  <Button
+                    data-test-id="spaces-create-button"
+                    className="add-button spaces-create-button"
+                    leftSection={<IconPlus size={16} />}
+                    onClick={() => setSpaceModalOpen(true)}
+                  >
+                    New Space
+                  </Button>
+                </Group>
 
-                  </Stack>
-                </Card>
+                <Box className="spaces-stats-grid">
+                  <Card withBorder className="surface-card spaces-stat-card">
+                    <Text className="spaces-stat-label">Total Spaces</Text>
+                    <Text className="spaces-stat-value">{homeSpaceCount}</Text>
+                  </Card>
+                  <Card withBorder className="surface-card spaces-stat-card">
+                    <Text className="spaces-stat-label">Active Spaces</Text>
+                    <Text className="spaces-stat-value">{activeSpacesCount}</Text>
+                  </Card>
+                  <Card withBorder className="surface-card spaces-stat-card">
+                    <Text className="spaces-stat-label">Total Members</Text>
+                    <Text className="spaces-stat-value">{totalSpaceMembers}</Text>
+                  </Card>
+                  <Card withBorder className="surface-card spaces-stat-card">
+                    <Text className="spaces-stat-label">Pending Invites</Text>
+                    <Text className="spaces-stat-value">{homePendingInviteCount}</Text>
+                  </Card>
+                </Box>
 
-                <Card radius="lg" withBorder className="surface-card">
-                  <Stack gap="xs">
-                      {(spacesQuery.data ?? []).length === 0 ? (
-                        <Text c="var(--app-subtitle)">
-                          No spaces yet. Create one to get started.
-                        </Text>
-                      ) : filteredSpaces.length === 0 ? (
-                        <Text c="var(--app-subtitle)">
-                          No spaces match your search.
-                        </Text>
-                      ) : (
-                        pagedSpaces.map((space) => (
+                <Stack gap="md">
+                  <Title order={2} className="spaces-section-title">
+                    Your Spaces
+                  </Title>
+
+                  {(spacesQuery.data ?? []).length === 0 ? (
+                    <Card radius="lg" withBorder className="surface-card home-empty-card">
+                      <Text c="var(--app-subtitle)">No spaces yet. Create one to get started.</Text>
+                    </Card>
+                  ) : filteredSpaces.length === 0 ? (
+                    <Card radius="lg" withBorder className="surface-card home-empty-card">
+                      <Text c="var(--app-subtitle)">No spaces match your search.</Text>
+                    </Card>
+                  ) : (
+                    <Box className="spaces-card-grid">
+                      {pagedSpaces.map((space) => {
+                        const progressPercent =
+                          space.totalTaskCount > 0
+                            ? Math.round((space.doneTaskCount / space.totalTaskCount) * 100)
+                            : 0;
+
+                        return (
                           <Card
                             key={space.id}
                             withBorder
-                            className="surface-card task-clickable-card"
+                            className="surface-card spaces-overview-card task-clickable-card"
                             tabIndex={0}
                             onClick={() => {
                               setSelectedSpaceId(space.id);
-                              localStorage.setItem(
-                                SELECTED_SPACE_KEY,
-                                String(space.id)
-                              );
-                              navigateTo(
-                                `/spaces/${slugifySpaceName(space.name)}/tasks`
-                              );
+                              localStorage.setItem(SELECTED_SPACE_KEY, String(space.id));
+                              navigateTo(`/spaces/${slugifySpaceName(space.name)}/tasks`);
                             }}
                             onKeyDown={(event) => {
                               if (event.key === "Enter" || event.key === " ") {
                                 event.preventDefault();
                                 setSelectedSpaceId(space.id);
-                                localStorage.setItem(
-                                  SELECTED_SPACE_KEY,
-                                  String(space.id)
-                                );
-                                navigateTo(
-                                  `/spaces/${slugifySpaceName(space.name)}/tasks`
-                                );
+                                localStorage.setItem(SELECTED_SPACE_KEY, String(space.id));
+                                navigateTo(`/spaces/${slugifySpaceName(space.name)}/tasks`);
                               }
                             }}
                           >
-                            <Stack gap="xs">
-                              <Group justify="space-between" align="flex-start" wrap="nowrap">
-                                <Box>
-                                  <Text fw={700}>{space.name}</Text>
-                                  <Text size="sm" c="var(--app-subtitle)" className="multiline-preview">
+                            <Stack justify="space-between" h="100%">
+                              <Stack gap="md">
+                                <Group justify="space-between" align="flex-start" wrap="nowrap">
+                                  <Text fw={700} size="xl" c="var(--app-text)" className="spaces-card-title">
+                                    {space.name}
+                                  </Text>
+                                </Group>
+                                <Box className="spaces-card-description">
+                                  <Text size="sm" c="var(--app-subtitle)" className="spaces-card-description-text">
                                     {space.description || "No description"}
                                   </Text>
                                 </Box>
+                                <Stack gap={8}>
+                                  <Group justify="space-between" align="center">
+                                    <Text size="sm" c="var(--app-subtitle)">
+                                      Progress
+                                    </Text>
+                                    <Text size="sm" fw={600} c="var(--app-text)">
+                                      {space.doneTaskCount}/{space.totalTaskCount} tasks
+                                    </Text>
+                                  </Group>
+                                  <Box className="spaces-progress-track">
+                                    <Box
+                                      className="spaces-progress-fill"
+                                      style={{ width: `${progressPercent}%` }}
+                                    />
+                                  </Box>
+                                </Stack>
+                              </Stack>
+                              <Group justify="space-between" align="center" className="spaces-card-footer">
+                                <Text size="sm" c="var(--app-subtitle)">
+                                  {space.memberCount} {space.memberCount === 1 ? "member" : "members"}
+                                </Text>
                                 <Badge
                                   variant="light"
                                   color={space.role === "owner" ? "teal" : "gray"}
@@ -3121,64 +3178,111 @@ function App() {
                                   {space.role === "owner" ? "Owner" : "Member"}
                                 </Badge>
                               </Group>
-                              <Group gap="xs" wrap="wrap">
-                                <Badge variant="light">{space.memberCount} members</Badge>
-                                <Badge
-                                  variant="light"
-                                  color="teal"
-                                  leftSection={<IconCheck size={12} />}
-                                >
-                                  {space.doneTaskCount}/{space.totalTaskCount} done
-                                </Badge>
+                            </Stack>
+                          </Card>
+                        );
+                      })}
+                    </Box>
+                  )}
+
+                  {filteredSpaces.length > 10 ? (
+                    <Group justify="center">
+                      <Pagination
+                        value={spacesPage}
+                        onChange={(nextPage) => {
+                          setSpacesPage(nextPage);
+                          const params = new URLSearchParams(currentSearch);
+                          if (nextPage <= 1) {
+                            params.delete("page");
+                          } else {
+                            params.set("page", String(nextPage));
+                          }
+
+                          const nextSearch = params.toString();
+                          navigateTo(`/spaces${nextSearch ? `?${nextSearch}` : ""}`);
+                        }}
+                        total={totalSpacePages}
+                      />
+                    </Group>
+                  ) : null}
+                </Stack>
+
+                {invitesQuery.data && invitesQuery.data.length > 0 ? (
+                  <Stack gap="md">
+                    <Title order={2} className="spaces-section-title">
+                      Pending invites for you
+                    </Title>
+                    <Box className="spaces-card-grid">
+                      {invitesQuery.data.map((invite) => {
+                        const progressPercent =
+                          invite.totalTaskCount > 0
+                            ? Math.round((invite.doneTaskCount / invite.totalTaskCount) * 100)
+                            : 0;
+
+                        return (
+                          <Card
+                            key={invite.id}
+                            withBorder
+                            className="surface-card spaces-overview-card task-clickable-card"
+                            tabIndex={0}
+                            onClick={() => setHomeInvitePreview(invite)}
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter" || event.key === " ") {
+                                event.preventDefault();
+                                setHomeInvitePreview(invite);
+                              }
+                            }}
+                          >
+                            <Stack justify="space-between" h="100%">
+                              <Stack gap="md">
+                                <Group justify="space-between" align="flex-start" wrap="nowrap">
+                                  <Text fw={700} size="xl" c="var(--app-text)" className="spaces-card-title">
+                                    {invite.spaceName}
+                                  </Text>
+                                  <Badge variant="light" color="cyan" className="spaces-invited-badge">
+                                    Invited
+                                  </Badge>
+                                </Group>
+                                <Box className="spaces-card-description">
+                                  <Text
+                                    size="sm"
+                                    c="var(--app-subtitle)"
+                                    className="spaces-card-description-text"
+                                  >
+                                    {invite.spaceDescription || "No description provided."}
+                                  </Text>
+                                </Box>
+                                <Stack gap={8}>
+                                  <Group justify="space-between" align="center">
+                                    <Text size="sm" c="var(--app-subtitle)">
+                                      Progress
+                                    </Text>
+                                    <Text size="sm" fw={600} c="var(--app-text)">
+                                      {invite.doneTaskCount}/{invite.totalTaskCount} tasks
+                                    </Text>
+                                  </Group>
+                                  <Box className="spaces-progress-track">
+                                    <Box
+                                      className="spaces-progress-fill"
+                                      style={{ width: `${progressPercent}%` }}
+                                    />
+                                  </Box>
+                                </Stack>
+                              </Stack>
+                              <Group justify="space-between" align="center" className="spaces-card-footer">
+                                <Text size="sm" c="var(--app-subtitle)">
+                                  {invite.memberCount} {invite.memberCount === 1 ? "member" : "members"}
+                                </Text>
+                                <Text size="sm" c="var(--app-subtitle)">
+                                  Invited by {invite.invitedByEmail}
+                                </Text>
                               </Group>
                             </Stack>
                           </Card>
-                        ))
-                      )}
+                        );
+                      })}
+                    </Box>
                   </Stack>
-                </Card>
-                {filteredSpaces.length > 10 ? (
-                  <Group justify="center">
-                    <Pagination
-                      value={spacesPage}
-                      onChange={(nextPage) => {
-                        setSpacesPage(nextPage);
-                        const params = new URLSearchParams(currentSearch);
-                        if (nextPage <= 1) {
-                          params.delete("page");
-                        } else {
-                          params.set("page", String(nextPage));
-                        }
-
-                        const nextSearch = params.toString();
-                        navigateTo(`/spaces${nextSearch ? `?${nextSearch}` : ""}`);
-                      }}
-                      total={totalSpacePages}
-                    />
-                  </Group>
-                ) : null}
-                {invitesQuery.data && invitesQuery.data.length > 0 ? (
-                  <Card radius="lg" withBorder className="surface-card">
-                    <Stack gap="xs">
-                      <Text fw={700}>Pending invites for you</Text>
-                      {invitesQuery.data.map((invite) => (
-                        <Group key={invite.id} justify="space-between">
-                          <Text size="sm" c="var(--app-text)">
-                            {invite.spaceName} invited by {invite.invitedByEmail}
-                          </Text>
-                            <Button
-                              data-test-id="spaces-invite-accept-button"
-                              size="xs"
-                              variant="light"
-                              loading={acceptInviteMutation.isPending}
-                            onClick={() => acceptInviteMutation.mutate(invite.id)}
-                          >
-                            Accept
-                          </Button>
-                        </Group>
-                      ))}
-                    </Stack>
-                  </Card>
                 ) : null}
               </Stack>
             ) : null}

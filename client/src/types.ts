@@ -84,6 +84,10 @@ export type SpaceInvite = {
   spaceId: number;
   spaceName: string;
   spaceDescription: string;
+  memberCount: number;
+  totalTaskCount: number;
+  doneTaskCount: number;
+  openTaskCount: number;
   email: string;
   invitedFirstName: string;
   invitedLastName: string;
