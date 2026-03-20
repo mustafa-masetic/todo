@@ -114,6 +114,7 @@ type AuthMode = "login" | "register";
 
 const SELECTED_SPACE_KEY = "todo-flow-selected-space";
 const ADMIN_ITEMS_PER_PAGE = 10;
+const SPACES_ITEMS_PER_PAGE = 12;
 
 function slugifySpaceName(name: string): string {
   return name
@@ -1402,10 +1403,10 @@ function App() {
       `${space.name} ${space.description}`.toLowerCase().includes(normalizedSpacesSearch)
     );
   }, [normalizedSpacesSearch, spacesQuery.data]);
-  const totalSpacePages = Math.max(1, Math.ceil(filteredSpaces.length / 10));
+  const totalSpacePages = Math.max(1, Math.ceil(filteredSpaces.length / SPACES_ITEMS_PER_PAGE));
   const pagedSpaces = useMemo(() => {
-    const offset = (spacesPage - 1) * 10;
-    return filteredSpaces.slice(offset, offset + 10);
+    const offset = (spacesPage - 1) * SPACES_ITEMS_PER_PAGE;
+    return filteredSpaces.slice(offset, offset + SPACES_ITEMS_PER_PAGE);
   }, [filteredSpaces, spacesPage]);
   const filteredAdminUsers = useMemo(() => {
     const items = (adminUsersQuery.data ?? []) as AdminUserRow[];
@@ -3097,6 +3098,84 @@ function App() {
                   </Card>
                 </Box>
 
+                {invitesQuery.data && invitesQuery.data.length > 0 ? (
+                  <Stack gap="md">
+                    <Title order={2} className="spaces-section-title">
+                      Pending invites for you
+                    </Title>
+                    <Box className="spaces-card-grid">
+                      {invitesQuery.data.map((invite) => {
+                        const progressPercent =
+                          invite.totalTaskCount > 0
+                            ? Math.round((invite.doneTaskCount / invite.totalTaskCount) * 100)
+                            : 0;
+
+                        return (
+                          <Card
+                            key={invite.id}
+                            withBorder
+                            className="surface-card spaces-overview-card task-clickable-card"
+                            tabIndex={0}
+                            onClick={() => setHomeInvitePreview(invite)}
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter" || event.key === " ") {
+                                event.preventDefault();
+                                setHomeInvitePreview(invite);
+                              }
+                            }}
+                          >
+                            <Stack justify="space-between" h="100%">
+                              <Stack gap="md">
+                                <Group justify="space-between" align="flex-start" wrap="nowrap">
+                                  <Text fw={700} size="xl" c="var(--app-text)" className="spaces-card-title">
+                                    {invite.spaceName}
+                                  </Text>
+                                  <Badge variant="light" color="cyan" className="spaces-invited-badge">
+                                    Invited
+                                  </Badge>
+                                </Group>
+                                <Box className="spaces-card-description">
+                                  <Text
+                                    size="sm"
+                                    c="var(--app-subtitle)"
+                                    className="spaces-card-description-text"
+                                  >
+                                    {invite.spaceDescription || "No description provided."}
+                                  </Text>
+                                </Box>
+                                <Stack gap={8}>
+                                  <Group justify="space-between" align="center">
+                                    <Text size="sm" c="var(--app-subtitle)">
+                                      Progress
+                                    </Text>
+                                    <Text size="sm" fw={600} c="var(--app-text)">
+                                      {invite.doneTaskCount}/{invite.totalTaskCount} tasks
+                                    </Text>
+                                  </Group>
+                                  <Box className="spaces-progress-track">
+                                    <Box
+                                      className="spaces-progress-fill"
+                                      style={{ width: `${progressPercent}%` }}
+                                    />
+                                  </Box>
+                                </Stack>
+                              </Stack>
+                              <Group justify="space-between" align="center" className="spaces-card-footer">
+                                <Text size="sm" c="var(--app-subtitle)">
+                                  {invite.memberCount} {invite.memberCount === 1 ? "member" : "members"}
+                                </Text>
+                                <Text size="sm" c="var(--app-subtitle)">
+                                  Invited by {invite.invitedByEmail}
+                                </Text>
+                              </Group>
+                            </Stack>
+                          </Card>
+                        );
+                      })}
+                    </Box>
+                  </Stack>
+                ) : null}
+
                 <Stack gap="md">
                   <Title order={2} className="spaces-section-title">
                     Your Spaces
@@ -3185,7 +3264,7 @@ function App() {
                     </Box>
                   )}
 
-                  {filteredSpaces.length > 10 ? (
+                  {filteredSpaces.length > SPACES_ITEMS_PER_PAGE ? (
                     <Group justify="center">
                       <Pagination
                         value={spacesPage}
@@ -3206,84 +3285,6 @@ function App() {
                     </Group>
                   ) : null}
                 </Stack>
-
-                {invitesQuery.data && invitesQuery.data.length > 0 ? (
-                  <Stack gap="md">
-                    <Title order={2} className="spaces-section-title">
-                      Pending invites for you
-                    </Title>
-                    <Box className="spaces-card-grid">
-                      {invitesQuery.data.map((invite) => {
-                        const progressPercent =
-                          invite.totalTaskCount > 0
-                            ? Math.round((invite.doneTaskCount / invite.totalTaskCount) * 100)
-                            : 0;
-
-                        return (
-                          <Card
-                            key={invite.id}
-                            withBorder
-                            className="surface-card spaces-overview-card task-clickable-card"
-                            tabIndex={0}
-                            onClick={() => setHomeInvitePreview(invite)}
-                            onKeyDown={(event) => {
-                              if (event.key === "Enter" || event.key === " ") {
-                                event.preventDefault();
-                                setHomeInvitePreview(invite);
-                              }
-                            }}
-                          >
-                            <Stack justify="space-between" h="100%">
-                              <Stack gap="md">
-                                <Group justify="space-between" align="flex-start" wrap="nowrap">
-                                  <Text fw={700} size="xl" c="var(--app-text)" className="spaces-card-title">
-                                    {invite.spaceName}
-                                  </Text>
-                                  <Badge variant="light" color="cyan" className="spaces-invited-badge">
-                                    Invited
-                                  </Badge>
-                                </Group>
-                                <Box className="spaces-card-description">
-                                  <Text
-                                    size="sm"
-                                    c="var(--app-subtitle)"
-                                    className="spaces-card-description-text"
-                                  >
-                                    {invite.spaceDescription || "No description provided."}
-                                  </Text>
-                                </Box>
-                                <Stack gap={8}>
-                                  <Group justify="space-between" align="center">
-                                    <Text size="sm" c="var(--app-subtitle)">
-                                      Progress
-                                    </Text>
-                                    <Text size="sm" fw={600} c="var(--app-text)">
-                                      {invite.doneTaskCount}/{invite.totalTaskCount} tasks
-                                    </Text>
-                                  </Group>
-                                  <Box className="spaces-progress-track">
-                                    <Box
-                                      className="spaces-progress-fill"
-                                      style={{ width: `${progressPercent}%` }}
-                                    />
-                                  </Box>
-                                </Stack>
-                              </Stack>
-                              <Group justify="space-between" align="center" className="spaces-card-footer">
-                                <Text size="sm" c="var(--app-subtitle)">
-                                  {invite.memberCount} {invite.memberCount === 1 ? "member" : "members"}
-                                </Text>
-                                <Text size="sm" c="var(--app-subtitle)">
-                                  Invited by {invite.invitedByEmail}
-                                </Text>
-                              </Group>
-                            </Stack>
-                          </Card>
-                        );
-                      })}
-                    </Box>
-                  </Stack>
-                ) : null}
               </Stack>
             ) : null}
 
