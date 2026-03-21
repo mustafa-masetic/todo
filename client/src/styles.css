@@ -103,7 +103,7 @@ body {
 
 .top-nav-bar {
   min-width: 0;
-  padding: 8px 0;
+  padding: 6px 0;
 }
 
 .top-nav-controls {
@@ -115,6 +115,10 @@ body {
   color: var(--app-subtitle);
   border: 1px solid transparent;
   background: transparent;
+  min-height: 42px;
+  padding-inline: 16px;
+  border-radius: 12px;
+  font-size: 0.98rem;
   transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease;
 }
 
@@ -131,10 +135,10 @@ body {
 }
 
 .top-nav-search-trigger {
-  min-width: 360px;
-  height: 50px;
-  padding: 0 10px;
-  border-radius: 14px;
+  min-width: 300px;
+  height: 44px;
+  padding: 0 8px;
+  border-radius: 12px;
   justify-content: flex-start;
   border: 1px solid color-mix(in srgb, var(--app-border) 72%, transparent);
   background: color-mix(in srgb, var(--app-surface) 90%, black 10%);
@@ -157,7 +161,7 @@ body {
 
 .top-nav-search-placeholder {
   color: color-mix(in srgb, var(--app-text) 72%, transparent);
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 500;
   line-height: 1;
 }
@@ -166,11 +170,11 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 84px;
-  height: 34px;
-  border-radius: 10px;
-  padding: 0 12px;
-  font-size: 15px;
+  min-width: 74px;
+  height: 30px;
+  border-radius: 9px;
+  padding: 0 10px;
+  font-size: 14px;
   font-weight: 700;
   color: color-mix(in srgb, #f8fafc 88%, transparent);
   background: color-mix(in srgb, #0f172a 82%, transparent);
@@ -178,14 +182,21 @@ body {
 }
 
 .top-nav-theme-toggle {
-  min-width: 40px;
-  width: 40px;
+  min-width: 36px;
+  width: 36px;
+  height: 36px;
   padding: 0;
   justify-content: center;
 }
 
+.top-nav-user-button {
+  min-height: 42px;
+  padding-inline: 10px;
+  border-radius: 12px;
+}
+
 .top-nav-user-button .mantine-Button-label {
-  max-width: 116px;
+  max-width: 104px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -703,7 +714,8 @@ body {
 
 .tasks-stat-filter-card:hover {
   transform: translateY(-1px);
-  border-color: color-mix(in srgb, var(--accent-strong) 40%, var(--app-border) 60%);
+  border-color: color-mix(in srgb, var(--app-border) 48%, transparent);
+  background: color-mix(in srgb, var(--app-surface) 88%, #22d3ee 12%);
 }
 
 .tasks-stat-filter-card:focus-visible {
@@ -712,9 +724,9 @@ body {
 }
 
 .tasks-stat-filter-card-active {
-  border-color: color-mix(in srgb, var(--accent-strong) 56%, var(--app-border) 44%);
-  background: color-mix(in srgb, var(--accent-strong) 10%, var(--app-surface) 90%);
-  box-shadow: 0 10px 24px color-mix(in srgb, var(--accent-strong) 10%, transparent);
+  border-color: color-mix(in srgb, var(--app-border) 35%, #22d3ee 65%);
+  background: color-mix(in srgb, var(--app-surface) 82%, #22d3ee 18%);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #ffffff 10%, transparent);
 }
 
 .tasks-stat-label {
@@ -773,7 +785,7 @@ body {
   padding-bottom: 16px;
   border-bottom-color: color-mix(in srgb, var(--app-border) 72%, transparent);
   color: color-mix(in srgb, var(--app-subtitle) 90%, transparent);
-  font-size: 0.95rem;
+  font-size: 0.76rem;
   font-weight: 600;
 }
 
@@ -782,9 +794,10 @@ body {
 }
 
 .tasks-overview-row td {
-  padding-block: 14px;
+  padding-block: 12px;
   border-bottom-color: color-mix(in srgb, var(--app-border) 64%, transparent);
   vertical-align: middle;
+  font-size: 0.82rem;
   transition:
     background-color 140ms ease,
     border-color 140ms ease,
@@ -808,7 +821,7 @@ body {
 .tasks-overview-row td:last-of-type {
   border-top-right-radius: 14px;
   border-bottom-right-radius: 14px;
-  padding-right: 14px;
+  padding-right: 20px;
 }
 
 .tasks-overview-row:hover td {
@@ -828,7 +841,7 @@ body {
 
 .tasks-row-title {
   line-height: 1.18;
-  font-size: 1rem;
+  font-size: 0.8rem;
 }
 
 .tasks-row-description {
@@ -837,19 +850,21 @@ body {
 
 .tasks-row-space {
   max-width: 100%;
-  line-height: 1.45;
+  line-height: 1.35;
+  font-size: 0.8rem;
 }
 
 .tasks-status-badge {
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  min-width: 112px;
+  min-width: 90px;
   justify-content: center;
   white-space: nowrap;
+  font-size: 0.64rem;
 }
 
 .tasks-actions-column {
-  text-align: right;
+  text-align: left;
 }
 
 .tasks-overview-table th:nth-child(1),
@@ -874,31 +889,34 @@ body {
 
 .tasks-overview-table th:nth-child(5),
 .tasks-overview-table td:nth-child(5) {
-  width: 11%;
+  width: 10%;
 }
 
 .tasks-overview-table th:nth-child(6),
 .tasks-overview-table td:nth-child(6) {
-  width: 6%;
+  width: 8%;
 }
 
 .space-detail-dashboard {
-  padding-top: 12px;
+  padding-top: 0;
+  margin-top: -6px;
 }
 
 .space-detail-back-link {
   align-self: flex-start;
-  color: var(--accent-strong);
+  color: #71e3f5;
   font-weight: 700;
   text-decoration: none;
 }
 
 .space-detail-hero-card {
-  padding: 40px 42px;
+  padding: 28px 30px;
 }
 
 .space-detail-hero-copy {
-  max-width: 840px;
+  flex: 1;
+  max-width: 1120px;
+  min-width: 0;
 }
 
 .space-detail-role-badge {
@@ -908,15 +926,16 @@ body {
 
 .space-detail-title {
   margin: 0;
-  font-size: clamp(2rem, 3.2vw, 3rem);
-  line-height: 1.04;
+  font-size: clamp(1.55rem, 2.2vw, 2.3rem);
+  line-height: 1.1;
   letter-spacing: -0.04em;
+  max-width: 24ch;
 }
 
 .space-detail-description {
-  font-size: 1.05rem;
-  line-height: 1.65;
-  max-width: 920px;
+  font-size: 0.94rem;
+  line-height: 1.5;
+  max-width: 96ch;
 }
 
 .space-detail-menu-button {
@@ -926,7 +945,7 @@ body {
 .space-detail-stats-grid {
   display: grid;
   grid-template-columns: 180px 180px minmax(0, 1fr);
-  gap: 28px;
+  gap: 18px;
   align-items: end;
 }
 
@@ -950,7 +969,7 @@ body {
 }
 
 .space-detail-panel {
-  padding: 24px 26px;
+  padding: 18px 20px;
 }
 
 .space-detail-tabs-list {
@@ -1013,19 +1032,19 @@ body {
 }
 
 .space-task-card {
-  min-height: 220px;
-  padding: 22px;
+  min-height: 180px;
+  padding: 18px;
 }
 
 .space-task-card-title {
   line-height: 1.18;
-  font-size: 1.35rem;
+  font-size: 1.08rem;
   padding-right: 12px;
 }
 
 .space-task-card-meta {
   margin-top: auto;
-  padding-top: 14px;
+  padding-top: 12px;
   border-top: 1px solid color-mix(in srgb, var(--app-border) 72%, transparent);
 }
 
@@ -1036,7 +1055,7 @@ body {
 }
 
 .space-member-row {
-  padding: 20px 22px;
+  padding: 16px 18px;
 }
 
 .space-member-row-main {

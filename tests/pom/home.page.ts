@@ -8,6 +8,6 @@ export class HomePage {
   }
 
   async expectOverviewVisible() {
-    await expect(this.page.getByText("Your overview")).toBeVisible();
+    await expect(this.page.getByRole("heading", { name: /welcome back/i })).toBeVisible();
   }
 }

@@ -38,7 +38,8 @@ export class SpacesPage {
   }
 
   async deleteCurrentSpace() {
-    await this.page.getByRole("button", { name: "Delete space" }).click();
+    await this.page.getByRole("button", { name: "Space actions" }).click();
+    await this.page.getByRole("menuitem", { name: "Delete space" }).click();
     await this.page.getByTestId("delete-space-confirm-button").click();
   }
 

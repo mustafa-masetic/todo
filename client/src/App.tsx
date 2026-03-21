@@ -1792,7 +1792,7 @@ function App() {
   }, [currentPath]);
 
   return (
-    <AppShell header={{ height: 74 }} padding="md" className="app-shell">
+    <AppShell header={{ height: 68 }} padding="md" className="app-shell">
       <AppShell.Header className="app-header">
         <Container size="lg" h="100%">
           <Group
@@ -4001,7 +4001,7 @@ function App() {
                                     <Text c="var(--app-text)">{formatShortDate(item.createdAt)}</Text>
                                   </Table.Td>
                                   <Table.Td>
-                                    <Group gap="xs" justify="flex-end" wrap="nowrap">
+                                    <Group gap="xs" justify="flex-start" wrap="nowrap">
                                       <ActionIcon
                                         variant="subtle"
                                         color="cyan"
