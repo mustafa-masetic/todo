@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
-import { test } from "./fixtures/auth-session";
+import { expect, test } from "./fixtures/auth-session";
+import { AuthPage } from "./pom/auth.page";
 import { NavigationComponent } from "./pom/navigation.component";
 import { SpacesPage } from "./pom/spaces.page";
 import { ensurePageLoaded } from "./utils/page";
@@ -56,5 +57,54 @@ test.describe("Spaces", () => {
     await nav.goToSpaces();
     await spacesPage.searchSpaces(spaceName);
     await spacesPage.expectNoMatchingSpaces();
+  });
+
+  test("space members tab supports search and invite flow", async ({ page, browser, baseURL }) => {
+    const nav = new NavigationComponent(page);
+    const spacesPage = new SpacesPage(page);
+    const unique = randomUUID();
+    const spaceName = `PW Members Space ${unique}`;
+    const invitedUserEmail = `playwright.member.${unique}@example.com`;
+    const invitedUserPassword = "TestPass123!";
+    const invitedUserContext = await browser.newContext({
+      baseURL: baseURL ?? undefined,
+      storageState: { cookies: [], origins: [] }
+    });
+    const invitedUserPage = await invitedUserContext.newPage();
+    const invitedUserAuth = new AuthPage(invitedUserPage);
+
+    try {
+      await invitedUserAuth.gotoRegister();
+      await invitedUserAuth.register({
+        email: invitedUserEmail,
+        firstName: "Invite",
+        lastName: "Member",
+        gender: "Other",
+        password: invitedUserPassword
+      });
+
+      await ensurePageLoaded(page);
+      await nav.themeToggle().waitFor({ state: "visible" });
+      await nav.goToSpaces();
+      await spacesPage.createSpace(spaceName, "Members flow space");
+      await spacesPage.openSpaceByName(spaceName);
+
+      await page.getByRole("tab", { name: /Members \(/ }).click();
+      await page.getByPlaceholder("Search members...").fill("Space");
+      await expect(page.getByText("Space Tester", { exact: true })).toBeVisible();
+
+      await page.getByPlaceholder("Search members...").fill("");
+      await page.getByTestId("space-invite-people-button").click();
+      const inviteModal = page.getByTestId("invite-modal");
+      await inviteModal.getByTestId("invite-search-input").fill(invitedUserEmail);
+      await expect(inviteModal.getByText(invitedUserEmail, { exact: true })).toBeVisible();
+      await inviteModal.getByRole("button", { name: "Invite" }).click();
+      await expect(page.getByText("Invite sent")).toBeVisible();
+
+      await expect(page.getByText(invitedUserEmail, { exact: true })).toBeVisible();
+      await expect(page.getByText("Invited", { exact: true })).toBeVisible();
+    } finally {
+      await invitedUserContext.close().catch(() => {});
+    }
   });
 });

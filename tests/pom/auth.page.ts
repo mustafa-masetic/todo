@@ -24,6 +24,28 @@ export class AuthPage {
 
   async gotoRegister() {
     await this.page.goto("/register");
+    await this.page.waitForLoadState("networkidle");
+
+    const firstNameInput = this.page.getByTestId("auth-first-name-input");
+    const accountMenuButton = this.page.getByTestId("nav-account-menu-button");
+
+    if (await accountMenuButton.isVisible().catch(() => false)) {
+      return;
+    }
+
+    if (await firstNameInput.isVisible().catch(() => false)) {
+      return;
+    }
+
+    const registerToggle = this.page
+      .getByTestId("hero-register-button")
+      .or(this.page.getByRole("button", { name: "Register" }))
+      .first();
+
+    if (await registerToggle.isVisible().catch(() => false)) {
+      await registerToggle.click();
+      await expect(firstNameInput).toBeVisible();
+    }
   }
 
   async login(
@@ -54,7 +76,23 @@ export class AuthPage {
       waitForAuthenticatedUi?: boolean;
     }
   ) {
-    await this.page.getByTestId("auth-first-name-input").fill(params.firstName);
+    const firstNameInput = this.page.getByTestId("auth-first-name-input");
+    const accountMenuButton = this.page.getByTestId("nav-account-menu-button");
+
+    if (await accountMenuButton.isVisible().catch(() => false)) {
+      return;
+    }
+
+    if (!(await firstNameInput.isVisible().catch(() => false))) {
+      const registerToggle = this.page
+        .getByTestId("hero-register-button")
+        .or(this.page.getByRole("button", { name: "Register" }))
+        .first();
+      await registerToggle.click();
+    }
+
+    await expect(firstNameInput).toBeVisible();
+    await firstNameInput.fill(params.firstName);
     await this.page.getByTestId("auth-last-name-input").fill(params.lastName);
     await this.page.getByTestId("auth-email-input").fill(params.email);
 

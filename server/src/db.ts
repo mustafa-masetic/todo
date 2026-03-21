@@ -228,13 +228,61 @@ db.exec(`
     space_id INTEGER NOT NULL,
     email TEXT NOT NULL,
     invited_by_user_id INTEGER NOT NULL,
-    status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending', 'accepted')),
+    status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending', 'accepted', 'declined')),
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     responded_at TEXT,
     FOREIGN KEY (space_id) REFERENCES spaces(id) ON DELETE CASCADE,
     FOREIGN KEY (invited_by_user_id) REFERENCES users(id) ON DELETE CASCADE
   );
 `);
+
+const inviteTableDefinition = db
+  .prepare(
+    "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'space_invites'"
+  )
+  .get() as { sql?: string } | undefined;
+
+if (
+  inviteTableDefinition?.sql &&
+  !inviteTableDefinition.sql.includes("'declined'")
+) {
+  db.exec(`
+    ALTER TABLE space_invites RENAME TO space_invites_old;
+
+    CREATE TABLE space_invites (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      space_id INTEGER NOT NULL,
+      email TEXT NOT NULL,
+      invited_by_user_id INTEGER NOT NULL,
+      status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending', 'accepted', 'declined')),
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      responded_at TEXT,
+      FOREIGN KEY (space_id) REFERENCES spaces(id) ON DELETE CASCADE,
+      FOREIGN KEY (invited_by_user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+
+    INSERT INTO space_invites (
+      id,
+      space_id,
+      email,
+      invited_by_user_id,
+      status,
+      created_at,
+      responded_at
+    )
+    SELECT
+      id,
+      space_id,
+      email,
+      invited_by_user_id,
+      status,
+      created_at,
+      responded_at
+    FROM space_invites_old;
+
+    DROP TABLE space_invites_old;
+  `);
+}
 
 db.exec(
   "CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_pending_invite ON space_invites (space_id, email, status)"

@@ -28,7 +28,7 @@ export class TaskDetailPage {
   }
 
   async expectTaskUpdatedToast() {
-    await expect(this.page.getByText("Task updated")).toBeVisible();
+    await expect(this.page.getByText("Task updated").first()).toBeVisible();
   }
 
   async deleteTask() {
