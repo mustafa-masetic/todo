@@ -37,6 +37,8 @@ import { notifications } from "@mantine/notifications";
 import {
   IconCheck,
   IconChevronDown,
+  IconDots,
+  IconArrowLeft,
   IconLogout,
   IconMoon,
   IconKey,
@@ -115,6 +117,15 @@ type AuthMode = "login" | "register";
 const SELECTED_SPACE_KEY = "todo-flow-selected-space";
 const ADMIN_ITEMS_PER_PAGE = 10;
 const SPACES_ITEMS_PER_PAGE = 12;
+const TASKS_ITEMS_PER_PAGE = 10;
+
+function formatShortDate(value: string): string {
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric"
+  }).format(new Date(value));
+}
 
 function slugifySpaceName(name: string): string {
   return name
@@ -227,12 +238,17 @@ function App() {
   const [globalSearchValue, setGlobalSearchValue] = useState("");
   const [debouncedGlobalSearch, setDebouncedGlobalSearch] = useState("");
   const [tasksFilterSpaceId, setTasksFilterSpaceId] = useState<string>("all");
+  const [tasksStatusFilter, setTasksStatusFilter] = useState<"all" | TaskStatus>("all");
+  const [tasksView, setTasksView] = useState<"all" | "assigned" | "created">("all");
+  const [activityTaskSearch, setActivityTaskSearch] = useState("");
+  const [activityMemberSearch, setActivityMemberSearch] = useState("");
   const [tasksPage, setTasksPage] = useState(
     window.location.pathname === "/tasks"
       ? parsePageFromSearch(window.location.search)
       : 1
   );
   const [taskModalOpen, setTaskModalOpen] = useState(false);
+  const [newTaskSpaceId, setNewTaskSpaceId] = useState<string>("");
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [newTaskDescription, setNewTaskDescription] = useState("");
   const [newTaskStatus, setNewTaskStatus] = useState<TaskStatus>("created");
@@ -363,6 +379,7 @@ function App() {
     [activitySpaceSlug, spacesQuery.data]
   );
   const activitySpaceId = activitySpace?.id ?? null;
+  const taskModalSpaceId = activitySpaceId ?? (newTaskSpaceId ? Number(newTaskSpaceId) : null);
   const taskDetailMatch = currentPath.match(/^\/tasks\/(\d+)$/);
   const taskDetailId = taskDetailMatch ? Number(taskDetailMatch[1]) : null;
 
@@ -382,6 +399,11 @@ function App() {
     queryKey: ["activity-todos", activitySpaceId, sessionToken],
     queryFn: () => getTodos(activitySpaceId as number),
     enabled: Boolean(activitySpaceId) && Boolean(sessionToken) && Boolean(meQuery.data)
+  });
+  const taskModalMembersQuery = useQuery({
+    queryKey: ["task-modal-members", taskModalSpaceId, sessionToken],
+    queryFn: () => getSpaceMembers(taskModalSpaceId as number),
+    enabled: Boolean(taskModalSpaceId) && Boolean(sessionToken) && Boolean(meQuery.data)
   });
   const liveInviteSearch = inviteSearchValue.trim();
   const trimmedInviteSearch = debouncedInviteSearch.trim();
@@ -407,15 +429,14 @@ function App() {
       "tasks",
       effectiveSearch,
       effectiveSpaceId ?? "all",
-      tasksPage,
       sessionToken
     ],
     queryFn: () =>
       getTasks({
         q: effectiveSearch,
         spaceId: effectiveSpaceId,
-        page: tasksPage,
-        pageSize: 10
+        page: 1,
+        pageSize: 200
       }),
     enabled: Boolean(sessionToken) && Boolean(meQuery.data)
   });
@@ -519,6 +540,15 @@ function App() {
     setSelectedSpaceId(activitySpaceId);
     localStorage.setItem(SELECTED_SPACE_KEY, String(activitySpaceId));
   }, [activitySpaceId]);
+
+  useEffect(() => {
+    if (!taskModalOpen || activitySpaceId) {
+      return;
+    }
+
+    const fallbackSpaceId = selectedSpaceId ?? spacesQuery.data?.[0]?.id ?? null;
+    setNewTaskSpaceId(fallbackSpaceId ? String(fallbackSpaceId) : "");
+  }, [activitySpaceId, selectedSpaceId, spacesQuery.data, taskModalOpen]);
 
   useEffect(() => {
     setInviteModalOpen(false);
@@ -865,6 +895,7 @@ function App() {
       setNewTaskStatus("created");
       setNewTaskAssignee("unassigned");
       setTaskModalOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
       queryClient.invalidateQueries({ queryKey: ["todos"] });
       queryClient.invalidateQueries({ queryKey: ["activity-todos"] });
       queryClient.invalidateQueries({ queryKey: ["admin-tasks"] });
@@ -1141,6 +1172,47 @@ function App() {
     const done = todos.filter((todo) => todo.completed === 1).length;
     return { total: todos.length, done };
   }, [activityTodosQuery.data]);
+  const activityTaskSearchValue = activityTaskSearch.trim().toLowerCase();
+  const filteredActivityTodos = useMemo(() => {
+    const todos = activityTodosQuery.data ?? [];
+    if (!activityTaskSearchValue) {
+      return todos;
+    }
+
+    return todos.filter((todo) =>
+      `${todo.title} ${todo.description}`.toLowerCase().includes(activityTaskSearchValue)
+    );
+  }, [activityTaskSearchValue, activityTodosQuery.data]);
+  const pendingActivityInvites = useMemo(
+    () => (activityInvitesQuery.data ?? []).filter((invite) => invite.status === "pending"),
+    [activityInvitesQuery.data]
+  );
+  const activityMemberSearchValue = activityMemberSearch.trim().toLowerCase();
+  const filteredActivityMembers = useMemo(() => {
+    const members = activityMembersQuery.data ?? [];
+    if (!activityMemberSearchValue) {
+      return members;
+    }
+
+    return members.filter((member) =>
+      `${member.firstName} ${member.lastName} ${member.email}`
+        .toLowerCase()
+        .includes(activityMemberSearchValue)
+    );
+  }, [activityMemberSearchValue, activityMembersQuery.data]);
+  const filteredPendingActivityInvites = useMemo(() => {
+    if (!activityMemberSearchValue) {
+      return pendingActivityInvites;
+    }
+
+    return pendingActivityInvites.filter((invite) =>
+      `${invite.invitedFirstName} ${invite.invitedLastName} ${invite.email}`
+        .toLowerCase()
+        .includes(activityMemberSearchValue)
+    );
+  }, [activityMemberSearchValue, pendingActivityInvites]);
+  const activityProgressPercent =
+    activityStats.total > 0 ? Math.round((activityStats.done / activityStats.total) * 100) : 0;
   const inviteCandidates = useMemo(() => {
     const members = new Set(
       (activityMembersQuery.data ?? []).map((member) => member.email.toLowerCase())
@@ -1388,10 +1460,41 @@ function App() {
     }
   }, [activitySpace, activityTab, currentPath]);
 
-  const totalTaskPages = Math.max(
-    1,
-    Math.ceil((tasksQuery.data?.total ?? 0) / (tasksQuery.data?.pageSize ?? 10))
+  const baseTasks = useMemo(() => tasksQuery.data?.items ?? [], [tasksQuery.data?.items]);
+  const taskStats = useMemo(
+    () => ({
+      total: baseTasks.length,
+      inProgress: baseTasks.filter((task) => task.status === "in_progress").length,
+      completed: baseTasks.filter((task) => task.status === "done").length,
+      created: baseTasks.filter((task) => task.status === "created").length,
+      assignedToMe: baseTasks.filter((task) => task.assigneeUserId === meQuery.data?.id).length,
+      createdByMe: baseTasks.filter((task) => task.userId === meQuery.data?.id).length
+    }),
+    [baseTasks, meQuery.data?.id]
   );
+  const tasksScopedItems = useMemo(() => {
+    if (tasksView === "assigned") {
+      return baseTasks.filter((task) => task.assigneeUserId === meQuery.data?.id);
+    }
+
+    if (tasksView === "created") {
+      return baseTasks.filter((task) => task.userId === meQuery.data?.id);
+    }
+
+    return baseTasks;
+  }, [baseTasks, meQuery.data?.id, tasksView]);
+  const visibleTasks = useMemo(() => {
+    if (tasksStatusFilter === "all") {
+      return tasksScopedItems;
+    }
+
+    return tasksScopedItems.filter((task) => task.status === tasksStatusFilter);
+  }, [tasksScopedItems, tasksStatusFilter]);
+  const totalTaskPages = Math.max(1, Math.ceil(visibleTasks.length / TASKS_ITEMS_PER_PAGE));
+  const pagedTasks = useMemo(() => {
+    const offset = (tasksPage - 1) * TASKS_ITEMS_PER_PAGE;
+    return visibleTasks.slice(offset, offset + TASKS_ITEMS_PER_PAGE);
+  }, [tasksPage, visibleTasks]);
   const normalizedSpacesSearch = debouncedSpacesSearch.trim().toLowerCase();
   const filteredSpaces = useMemo(() => {
     const allSpaces = spacesQuery.data ?? [];
@@ -1527,6 +1630,27 @@ function App() {
       setSpacesPage(pageFromUrl);
     }
   }, [currentPath, currentSearch, spacesPage]);
+
+  useEffect(() => {
+    setTasksPage(1);
+  }, [effectiveSearch, effectiveSpaceId, tasksStatusFilter, tasksView]);
+
+  useEffect(() => {
+    if (currentPath !== "/tasks") {
+      return;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    if (!params.has("page")) {
+      return;
+    }
+
+    params.delete("page");
+    const nextSearch = params.toString();
+    const normalizedNextSearch = nextSearch ? `?${nextSearch}` : "";
+    window.history.replaceState({}, "", `/tasks${normalizedNextSearch}`);
+    setCurrentSearch(normalizedNextSearch);
+  }, [currentPath, effectiveSearch, effectiveSpaceId, tasksStatusFilter, tasksView]);
 
   useEffect(() => {
     if (!tasksQuery.data) {
@@ -3289,55 +3413,146 @@ function App() {
             ) : null}
 
             {meQuery.data && isActivitiesPath ? (
-              <Stack gap="md">
+              <Stack gap="xl" className="space-detail-dashboard">
                 {activitySpace ? (
                   <>
-                    <Breadcrumbs>
-                      <Anchor
-                        component="button"
-                        type="button"
-                        onClick={() => navigateTo("/spaces")}
-                      >
-                        Spaces
-                      </Anchor>
-                      <Anchor
-                        component="button"
-                        type="button"
-                        onClick={() =>
-                          navigateTo(`/spaces/${slugifySpaceName(activitySpace.name)}/tasks`)
-                        }
-                      >
-                        {truncateText(activitySpace.name, 28)}
-                      </Anchor>
-                      <Text size="sm" c="var(--app-subtitle)">
-                        {activityTab === "members" ? "Members" : "Tasks"}
-                      </Text>
-                    </Breadcrumbs>
-                    <Card radius="lg" withBorder className="surface-card">
-                      <Group justify="space-between" align="center">
-                        <Box>
-                          <Title order={3}>{activitySpace.name}</Title>
-                        </Box>
-                        <Group>
-                          {activitySpace.role === "owner" ? (
-                            <Button
-                              color="red"
-                              variant="light"
-                              onClick={() =>
-                                setSpaceDeleteTarget({
-                                  spaceId: activitySpace.id,
-                                  spaceName: activitySpace.name
-                                })
-                              }
-                            >
-                              Delete space
-                            </Button>
-                          ) : null}
-                        </Group>
+                    <Anchor
+                      component="button"
+                      type="button"
+                      className="space-detail-back-link"
+                      onClick={() => navigateTo("/spaces")}
+                    >
+                      <Group gap={8} wrap="nowrap">
+                        <IconArrowLeft size={16} />
+                        <span>Back to Spaces</span>
                       </Group>
+                    </Anchor>
+                    <Card radius="lg" withBorder className="surface-card space-detail-hero-card">
+                      <Stack gap="xl">
+                        <Group justify="space-between" align="flex-start" wrap="nowrap">
+                          <Stack gap="md" className="space-detail-hero-copy">
+                            <Group gap="sm">
+                              <Badge
+                                variant="light"
+                                color={activitySpace.role === "owner" ? "teal" : "gray"}
+                                className="space-detail-role-badge"
+                              >
+                                {activitySpace.role === "owner" ? "Owner" : "Member"}
+                              </Badge>
+                              <Badge variant="light" color="cyan">
+                                {activityStats.total} tasks
+                              </Badge>
+                            </Group>
+                            <Title order={1} className="space-detail-title">
+                              {activitySpace.name}
+                            </Title>
+                            <Text c="var(--app-subtitle)" className="space-detail-description">
+                              {activitySpace.description || "No description provided for this space yet."}
+                            </Text>
+                          </Stack>
+
+                          <Menu shadow="md" width={220} position="bottom-end">
+                            <Menu.Target>
+                              <ActionIcon
+                                variant="light"
+                                size={44}
+                                radius="xl"
+                                className="space-detail-menu-button"
+                                aria-label="Space actions"
+                              >
+                                <IconDots size={20} />
+                              </ActionIcon>
+                            </Menu.Target>
+                            <Menu.Dropdown>
+                              {activitySpace.role === "owner" ? (
+                                <Menu.Item
+                                  leftSection={<IconUsers size={15} />}
+                                  onClick={() => setInviteModalOpen(true)}
+                                >
+                                  Invite people
+                                </Menu.Item>
+                              ) : null}
+                              <Menu.Item
+                                leftSection={<IconPlus size={15} />}
+                                onClick={() => {
+                                  setTaskModalOpen(true);
+                                  setNewTaskTitle("");
+                                  setNewTaskDescription("");
+                                  setNewTaskStatus("created");
+                                  setNewTaskAssignee("unassigned");
+                                }}
+                              >
+                                Add task
+                              </Menu.Item>
+                              {activitySpace.role === "owner" ? (
+                                <>
+                                  <Menu.Divider />
+                                  <Menu.Item
+                                    color="red"
+                                    leftSection={<IconTrash size={15} />}
+                                    onClick={() =>
+                                      setSpaceDeleteTarget({
+                                        spaceId: activitySpace.id,
+                                        spaceName: activitySpace.name
+                                      })
+                                    }
+                                  >
+                                    Delete space
+                                  </Menu.Item>
+                                </>
+                              ) : null}
+                            </Menu.Dropdown>
+                          </Menu>
+                        </Group>
+
+                        <Box className="space-detail-stats-grid">
+                          <Group gap="sm" className="space-detail-mini-stat">
+                            <Box className="space-detail-mini-stat-icon">
+                              <IconCheck size={18} />
+                            </Box>
+                            <Stack gap={0}>
+                              <Text size="sm" c="var(--app-subtitle)">
+                                Tasks
+                              </Text>
+                              <Text fw={700} size="xl" c="var(--app-text)">
+                                {activityStats.done}/{activityStats.total}
+                              </Text>
+                            </Stack>
+                          </Group>
+                          <Group gap="sm" className="space-detail-mini-stat">
+                            <Box className="space-detail-mini-stat-icon">
+                              <IconUsers size={18} />
+                            </Box>
+                            <Stack gap={0}>
+                              <Text size="sm" c="var(--app-subtitle)">
+                                Members
+                              </Text>
+                              <Text fw={700} size="xl" c="var(--app-text)">
+                                {activityMembersQuery.data?.length ?? 0}
+                              </Text>
+                            </Stack>
+                          </Group>
+                          <Stack gap={8} className="space-detail-progress-block">
+                            <Group justify="space-between" align="center">
+                              <Text size="sm" c="var(--app-subtitle)">
+                                Progress
+                              </Text>
+                              <Text size="sm" fw={700} c="var(--app-text)">
+                                {activityProgressPercent}%
+                              </Text>
+                            </Group>
+                            <Box className="spaces-progress-track">
+                              <Box
+                                className="spaces-progress-fill"
+                                style={{ width: `${activityProgressPercent}%` }}
+                              />
+                            </Box>
+                          </Stack>
+                        </Box>
+                      </Stack>
                     </Card>
 
-                    <Card radius="lg" withBorder className="surface-card">
+                    <Card radius="lg" withBorder className="surface-card space-detail-panel">
                       <Tabs
                         value={activityTab}
                         onChange={(value) => {
@@ -3350,112 +3565,160 @@ function App() {
                           );
                         }}
                       >
-                        <Tabs.List>
-                          <Tabs.Tab value="tasks">Tasks</Tabs.Tab>
-                          <Tabs.Tab value="members">Members</Tabs.Tab>
+                        <Tabs.List className="space-detail-tabs-list">
+                          <Tabs.Tab value="tasks" className="space-detail-tab">
+                            Tasks ({activityStats.total})
+                          </Tabs.Tab>
+                          <Tabs.Tab value="members" className="space-detail-tab">
+                            Members ({activityMembersQuery.data?.length ?? 0})
+                          </Tabs.Tab>
                         </Tabs.List>
 
                         <Tabs.Panel value="members" pt="md">
-                          <Stack gap="sm">
-                            {activitySpace.role === "owner" ? (
-                              <Group justify="space-between" align="center">
-                                <Text size="sm" c="var(--app-subtitle)">
-                                  Invite people by searching first name, last name, or email.
-                                </Text>
+                          <Stack gap="lg">
+                            <Group justify="space-between" align="center" className="space-detail-toolbar">
+                              <TextInput
+                                className="space-detail-task-search"
+                                placeholder="Search members..."
+                                leftSection={<IconSearch size={16} />}
+                                value={activityMemberSearch}
+                                onChange={(event) => setActivityMemberSearch(event.currentTarget.value)}
+                              />
+                              {activitySpace.role === "owner" ? (
                                 <Button
                                   data-test-id="space-invite-people-button"
-                                  leftSection={<IconUsers size={16} />}
+                                  className="add-button space-detail-add-task"
+                                  leftSection={<IconUserPlus size={16} />}
                                   onClick={() => setInviteModalOpen(true)}
                                 >
-                                  Invite people
+                                  Invite Member
                                 </Button>
-                              </Group>
-                            ) : null}
+                              ) : null}
+                            </Group>
 
                             {activityMembersQuery.isLoading || activityInvitesQuery.isLoading ? (
                               <Loader size="sm" />
                             ) : (
-                              <Table.ScrollContainer minWidth={700}>
-                                <Table striped highlightOnHover withTableBorder withColumnBorders>
-                                  <Table.Thead>
-                                    <Table.Tr>
-                                      <Table.Th>First Name</Table.Th>
-                                      <Table.Th>Last Name</Table.Th>
-                                      <Table.Th>Email</Table.Th>
-                                      <Table.Th>Status</Table.Th>
-                                    </Table.Tr>
-                                  </Table.Thead>
-                                  <Table.Tbody>
-                                    {(activityMembersQuery.data ?? []).map((member) => (
-                                      <Table.Tr key={`member-${member.userId}`}>
-                                        <Table.Td>{member.firstName || "-"}</Table.Td>
-                                        <Table.Td>{member.lastName || "-"}</Table.Td>
-                                        <Table.Td>{member.email}</Table.Td>
-                                        <Table.Td>
-                                          <Badge variant="light">
-                                            {member.role === "owner" ? "member (owner)" : "member"}
-                                          </Badge>
-                                        </Table.Td>
-                                      </Table.Tr>
-                                    ))}
-                                    {(activityInvitesQuery.data ?? [])
-                                      .filter((invite) => invite.status === "pending")
-                                      .map((invite) => (
-                                        <Table.Tr key={`invite-${invite.id}`}>
-                                          <Table.Td>{invite.invitedFirstName || "-"}</Table.Td>
-                                          <Table.Td>{invite.invitedLastName || "-"}</Table.Td>
-                                          <Table.Td>{invite.email}</Table.Td>
-                                          <Table.Td>
-                                            <Badge color="yellow" variant="light">
-                                              invited
+                              <Stack gap="md">
+                                {filteredActivityMembers.map((member) => (
+                                  <Card
+                                    key={`member-${member.userId}`}
+                                    withBorder
+                                    className="surface-card space-member-row"
+                                  >
+                                    <Group justify="space-between" align="center" wrap="nowrap">
+                                      <Group gap="md" wrap="nowrap" className="space-member-row-main">
+                                        <Avatar size={74} radius={24} color="cyan" variant="light">
+                                          {`${member.firstName?.[0] ?? ""}${member.lastName?.[0] ?? ""}`}
+                                        </Avatar>
+                                        <Stack gap={4}>
+                                          <Group gap="sm" wrap="wrap">
+                                            <Text fw={700} size="xl" c="var(--app-text)">
+                                              {`${member.firstName || ""} ${member.lastName || ""}`.trim() || member.email}
+                                            </Text>
+                                            <Badge
+                                              variant="light"
+                                              color={member.role === "owner" ? "violet" : "gray"}
+                                            >
+                                              {member.role === "owner" ? "Owner" : "Member"}
                                             </Badge>
-                                          </Table.Td>
-                                        </Table.Tr>
-                                      ))}
-                                  </Table.Tbody>
-                                </Table>
-                              </Table.ScrollContainer>
+                                          </Group>
+                                          <Text size="sm" c="var(--app-subtitle)">
+                                            {member.email}
+                                          </Text>
+                                          <Text size="sm" c="var(--app-subtitle)">
+                                            Joined {formatShortDate(member.joinedAt)}
+                                          </Text>
+                                        </Stack>
+                                      </Group>
+                                    </Group>
+                                  </Card>
+                                ))}
+
+                                {filteredPendingActivityInvites.map((invite) => (
+                                  <Card
+                                    key={`invite-${invite.id}`}
+                                    withBorder
+                                    className="surface-card space-member-row space-member-row-invite"
+                                  >
+                                    <Group justify="space-between" align="center" wrap="nowrap">
+                                      <Group gap="md" wrap="nowrap" className="space-member-row-main">
+                                        <Avatar size={74} radius={24} color="yellow" variant="light">
+                                          {`${invite.invitedFirstName?.[0] ?? ""}${invite.invitedLastName?.[0] ?? ""}`}
+                                        </Avatar>
+                                        <Stack gap={4}>
+                                          <Group gap="sm" wrap="wrap">
+                                            <Text fw={700} size="xl" c="var(--app-text)">
+                                              {`${invite.invitedFirstName || ""} ${invite.invitedLastName || ""}`.trim() ||
+                                                invite.email}
+                                            </Text>
+                                            <Badge color="yellow" variant="light">
+                                              Invited
+                                            </Badge>
+                                          </Group>
+                                          <Text size="sm" c="var(--app-subtitle)">
+                                            {invite.email}
+                                          </Text>
+                                          <Text size="sm" c="var(--app-subtitle)">
+                                            Invited {formatShortDate(invite.createdAt)}
+                                          </Text>
+                                        </Stack>
+                                      </Group>
+                                    </Group>
+                                  </Card>
+                                ))}
+
+                                {filteredActivityMembers.length === 0 &&
+                                filteredPendingActivityInvites.length === 0 ? (
+                                  <Card radius="lg" withBorder className="surface-card home-empty-card">
+                                    <Text c="var(--app-subtitle)">
+                                      {activityMemberSearchValue
+                                        ? "No members match your search."
+                                        : "No members in this space yet."}
+                                    </Text>
+                                  </Card>
+                                ) : null}
+                              </Stack>
                             )}
                           </Stack>
                         </Tabs.Panel>
 
                         <Tabs.Panel value="tasks" pt="md">
-                          <Stack gap="sm">
-                            <Group justify="space-between" align="center">
-                              <Text fw={700}>Space tasks</Text>
-                              <Group gap="xs">
-                                <Badge
-                                  variant="filled"
-                                  className="stats-badge"
-                                  leftSection={<IconCheck size={14} />}
-                                >
-                                  {activityStats.done}/{activityStats.total} done
-                                </Badge>
-                                <Button
-                                  data-test-id="space-add-task-button"
-                                  leftSection={<IconPlus size={16} />}
-                                  onClick={() => {
-                                    setTaskModalOpen(true);
-                                    setNewTaskTitle("");
-                                    setNewTaskDescription("");
-                                    setNewTaskStatus("created");
-                                    setNewTaskAssignee("unassigned");
-                                  }}
-                                >
-                                  Add Task
-                                </Button>
-                              </Group>
+                          <Stack gap="lg">
+                            <Group justify="space-between" align="center" className="space-detail-toolbar">
+                              <TextInput
+                                className="space-detail-task-search"
+                                placeholder="Search tasks..."
+                                leftSection={<IconSearch size={16} />}
+                                value={activityTaskSearch}
+                                onChange={(event) => setActivityTaskSearch(event.currentTarget.value)}
+                              />
+                              <Button
+                                data-test-id="space-add-task-button"
+                                className="add-button space-detail-add-task"
+                                leftSection={<IconPlus size={16} />}
+                                onClick={() => {
+                                  setTaskModalOpen(true);
+                                  setNewTaskTitle("");
+                                  setNewTaskDescription("");
+                                  setNewTaskStatus("created");
+                                  setNewTaskAssignee("unassigned");
+                                }}
+                              >
+                                Add Task
+                              </Button>
                             </Group>
                             {activityTodosQuery.isLoading ? (
                               <Group justify="center" py="xl">
                                 <Loader />
                               </Group>
                             ) : (
-                              (activityTodosQuery.data ?? []).map((todo) => (
+                              <Box className="space-detail-task-grid">
+                                {filteredActivityTodos.map((todo) => (
                                 <Card
                                   key={todo.id}
                                   withBorder
-                                  className="surface-card task-clickable-card"
+                                  className="surface-card task-clickable-card space-task-card"
                                   onClick={() => navigateTo(`/tasks/${todo.id}`)}
                                   tabIndex={0}
                                   onKeyDown={(event) => {
@@ -3465,25 +3728,40 @@ function App() {
                                     }
                                   }}
                                 >
-                                  <Group justify="space-between" align="center">
-                                    <Box>
-                                      <Text fw={600} c="var(--app-text)">
+                                  <Stack justify="space-between" h="100%" gap="lg">
+                                    <Group justify="space-between" align="flex-start" wrap="nowrap">
+                                      <Text fw={700} c="var(--app-text)" className="space-task-card-title">
                                         {todo.title}
                                       </Text>
-                                      <Text size="sm" c="var(--app-subtitle)" className="multiline-preview">
+                                      <Badge variant="light" color={taskStatusMeta[todo.status].color}>
+                                        {taskStatusMeta[todo.status].label}
+                                      </Badge>
+                                    </Group>
+                                    <Text size="sm" c="var(--app-subtitle)" className="multiline-preview">
                                         {todo.description || "No description"}
+                                    </Text>
+                                    <Group justify="space-between" align="center" className="space-task-card-meta">
+                                      <Text size="sm" c="var(--app-subtitle)">
+                                        Created {formatShortDate(todo.createdAt)}
                                       </Text>
-                                    </Box>
-                                    <Badge variant="light" color={taskStatusMeta[todo.status].color}>
-                                      {taskStatusMeta[todo.status].label}
-                                    </Badge>
-                                  </Group>
+                                      <Text size="sm" c="var(--app-subtitle)">
+                                        {todo.assigneeUserId ? "Assigned" : "Unassigned"}
+                                      </Text>
+                                    </Group>
+                                  </Stack>
                                 </Card>
-                              ))
+                                ))}
+                              </Box>
                             )}
                             {!activityTodosQuery.isLoading &&
-                            (activityTodosQuery.data ?? []).length === 0 ? (
-                              <Text c="var(--app-subtitle)">No tasks in this space yet.</Text>
+                            filteredActivityTodos.length === 0 ? (
+                              <Card radius="lg" withBorder className="surface-card home-empty-card">
+                                <Text c="var(--app-subtitle)">
+                                  {activityTaskSearchValue
+                                    ? "No tasks match your search."
+                                    : "No tasks in this space yet."}
+                                </Text>
+                              </Card>
                             ) : null}
                           </Stack>
                         </Tabs.Panel>
@@ -3499,119 +3777,292 @@ function App() {
             ) : null}
 
             {meQuery.data && currentPath === "/tasks" ? (
-              <Stack gap="md">
-                <Card withBorder className="surface-card">
-                  <Stack gap="sm">
-                    <Title order={4}>Tasks</Title>
-                    <Select
-                      data-test-id="tasks-space-filter"
-                      className="todo-input"
-                      label="Filter by space"
-                      value={tasksFilterSpaceId}
-                      onChange={(value) => {
-                        if (value) {
-                          setTasksFilterSpaceId(value);
-                        }
-                      }}
-                      data={[
-                        { value: "all", label: "All spaces" },
-                        ...((spacesQuery.data ?? []).map((space) => ({
-                          value: String(space.id),
-                          label: space.name
-                        })) as Array<{ value: string; label: string }>)
-                      ]}
-                    />
-                    <TextInput
-                      data-test-id="tasks-search-input"
-                      className="todo-input"
-                      placeholder="Search by task title"
-                      leftSection={<IconSearch size={16} />}
-                      value={searchValue}
-                      onChange={(event) => setSearchValue(event.currentTarget.value)}
-                    />
-                  </Stack>
-                </Card>
+              <Stack gap="xl" className="tasks-dashboard">
+                <Group justify="space-between" align="center" wrap="nowrap" className="tasks-toolbar">
+                  <TextInput
+                    data-test-id="tasks-search-input"
+                    className="tasks-search-input"
+                    placeholder="Search tasks by title, description, or space"
+                    leftSection={<IconSearch size={16} />}
+                    value={searchValue}
+                    onChange={(event) => setSearchValue(event.currentTarget.value)}
+                  />
+                  <Select
+                    data-test-id="tasks-status-filter"
+                    className="tasks-status-select"
+                    value={tasksStatusFilter}
+                    onChange={(value) => setTasksStatusFilter((value as "all" | TaskStatus) ?? "all")}
+                    data={[
+                      { value: "all", label: "All Status" },
+                      ...taskStatusOptions
+                    ]}
+                  />
+                  <Button
+                    data-test-id="tasks-create-button"
+                    className="add-button tasks-create-button"
+                    leftSection={<IconPlus size={16} />}
+                    disabled={(spacesQuery.data ?? []).length === 0}
+                    onClick={() => {
+                      setTaskModalOpen(true);
+                      setNewTaskTitle("");
+                      setNewTaskDescription("");
+                      setNewTaskStatus("created");
+                      setNewTaskAssignee("unassigned");
+                    }}
+                  >
+                    New Task
+                  </Button>
+                </Group>
 
-                {trimmedSearch.length > 0 && trimmedSearch.length < 3 ? (
-                  <Card withBorder className="surface-card">
-                    <Text c="var(--app-subtitle)">
-                      Search starts after 3 characters. Showing unfiltered tasks.
-                    </Text>
-                  </Card>
-                ) : null}
-
-                {tasksQuery.isLoading ? (
-                  <Group justify="center" py="xl">
-                    <Loader />
-                  </Group>
-                ) : null}
-
-                {(tasksQuery.data?.items ?? []).map((item) => (
+                <Box className="tasks-stats-grid">
                   <Card
-                    key={`${item.spaceId}-${item.id}`}
                     withBorder
-                    className="surface-card task-clickable-card"
-                    onClick={() => navigateTo(`/tasks/${item.id}`)}
+                    className={`surface-card tasks-stat-card tasks-stat-filter-card${
+                      tasksStatusFilter === "all" ? " tasks-stat-filter-card-active" : ""
+                    }`}
                     tabIndex={0}
+                    onClick={() => setTasksStatusFilter("all")}
                     onKeyDown={(event) => {
                       if (event.key === "Enter" || event.key === " ") {
                         event.preventDefault();
-                        navigateTo(`/tasks/${item.id}`);
+                        setTasksStatusFilter("all");
                       }
                     }}
                   >
-                    <Group justify="space-between" align="center">
-                      <Box>
-                        <Text fw={600} c="var(--app-text)">
-                          {item.title}
-                        </Text>
-                        <Text size="sm" c="var(--app-subtitle)" className="multiline-preview">
-                          {item.description || "No description"}
-                        </Text>
-                        <Tooltip label={`Space: ${item.spaceName}`} openDelay={200}>
-                          <Badge
-                            mt={6}
-                            variant="light"
-                            color="indigo"
-                            style={{ maxWidth: 220 }}
-                          >
-                            {truncateText(item.spaceName, 22)}
-                          </Badge>
-                        </Tooltip>
-                      </Box>
-                      <Badge variant="light" color={taskStatusMeta[item.status].color}>
-                        {taskStatusMeta[item.status].label}
-                      </Badge>
+                    <Text className="tasks-stat-label">Total Tasks</Text>
+                    <Text className="tasks-stat-value">{taskStats.total}</Text>
+                  </Card>
+                  <Card
+                    withBorder
+                    className={`surface-card tasks-stat-card tasks-stat-filter-card${
+                      tasksStatusFilter === "in_progress" ? " tasks-stat-filter-card-active" : ""
+                    }`}
+                    tabIndex={0}
+                    onClick={() => setTasksStatusFilter("in_progress")}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        setTasksStatusFilter("in_progress");
+                      }
+                    }}
+                  >
+                    <Text className="tasks-stat-label">In Progress</Text>
+                    <Text className="tasks-stat-value">{taskStats.inProgress}</Text>
+                  </Card>
+                  <Card
+                    withBorder
+                    className={`surface-card tasks-stat-card tasks-stat-filter-card${
+                      tasksStatusFilter === "done" ? " tasks-stat-filter-card-active" : ""
+                    }`}
+                    tabIndex={0}
+                    onClick={() => setTasksStatusFilter("done")}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        setTasksStatusFilter("done");
+                      }
+                    }}
+                  >
+                    <Text className="tasks-stat-label">Completed</Text>
+                    <Text className="tasks-stat-value tasks-stat-value-success">{taskStats.completed}</Text>
+                  </Card>
+                  <Card
+                    withBorder
+                    className={`surface-card tasks-stat-card tasks-stat-filter-card${
+                      tasksStatusFilter === "created" ? " tasks-stat-filter-card-active" : ""
+                    }`}
+                    tabIndex={0}
+                    onClick={() => setTasksStatusFilter("created")}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        setTasksStatusFilter("created");
+                      }
+                    }}
+                  >
+                    <Text className="tasks-stat-label">Created</Text>
+                    <Text className="tasks-stat-value tasks-stat-value-accent">{taskStats.created}</Text>
+                  </Card>
+                </Box>
+
+                <Card withBorder className="surface-card tasks-table-shell">
+                  <Stack gap="lg">
+                    <Group gap="sm" className="tasks-view-tabs">
+                      <Button
+                        variant={tasksView === "all" ? "filled" : "subtle"}
+                        className="tasks-view-tab"
+                        onClick={() => setTasksView("all")}
+                      >
+                        All Tasks ({taskStats.total})
+                      </Button>
+                      <Button
+                        variant={tasksView === "assigned" ? "filled" : "subtle"}
+                        className="tasks-view-tab"
+                        onClick={() => setTasksView("assigned")}
+                      >
+                        Assigned to Me ({taskStats.assignedToMe})
+                      </Button>
+                      <Button
+                        variant={tasksView === "created" ? "filled" : "subtle"}
+                        className="tasks-view-tab"
+                        onClick={() => setTasksView("created")}
+                      >
+                        Created by Me ({taskStats.createdByMe})
+                      </Button>
                     </Group>
-                  </Card>
-                ))}
 
-                {tasksQuery.data && tasksQuery.data.items.length === 0 ? (
-                  <Card withBorder className="surface-card">
-                    <Text c="var(--app-subtitle)">No matching tasks found.</Text>
-                  </Card>
-                ) : null}
+                    {trimmedSearch.length > 0 && trimmedSearch.length < 3 ? (
+                      <Text c="var(--app-subtitle)">
+                        Search starts after 3 characters. Showing unfiltered tasks.
+                      </Text>
+                    ) : null}
 
-                {tasksQuery.data && tasksQuery.data.total > 10 ? (
-                  <Group justify="center">
-                    <Pagination
-                      value={tasksPage}
-                      onChange={(nextPage) => {
-                        setTasksPage(nextPage);
-                        const params = new URLSearchParams(currentSearch);
-                        if (nextPage <= 1) {
-                          params.delete("page");
-                        } else {
-                          params.set("page", String(nextPage));
-                        }
+                    {tasksQuery.isLoading ? (
+                      <Group justify="center" py="xl">
+                        <Loader />
+                      </Group>
+                    ) : null}
 
-                        const nextSearch = params.toString();
-                        navigateTo(`/tasks${nextSearch ? `?${nextSearch}` : ""}`);
-                      }}
-                      total={totalTaskPages}
-                    />
-                  </Group>
-                ) : null}
+                    {!tasksQuery.isLoading && visibleTasks.length === 0 ? (
+                      <Card radius="lg" withBorder className="surface-card home-empty-card">
+                        <Text c="var(--app-subtitle)">No matching tasks found.</Text>
+                      </Card>
+                    ) : null}
+
+                    {!tasksQuery.isLoading && visibleTasks.length > 0 ? (
+                      <>
+                        <Box className="tasks-table-wrap">
+                          <Table
+                            horizontalSpacing="md"
+                            verticalSpacing="md"
+                            highlightOnHover={false}
+                            className="tasks-overview-table"
+                          >
+                            <Table.Thead>
+                              <Table.Tr>
+                                <Table.Th>Task</Table.Th>
+                                <Table.Th>Space</Table.Th>
+                                <Table.Th>Status</Table.Th>
+                                <Table.Th>Assignee</Table.Th>
+                                <Table.Th>Created</Table.Th>
+                                <Table.Th className="tasks-actions-column">Actions</Table.Th>
+                              </Table.Tr>
+                            </Table.Thead>
+                            <Table.Tbody>
+                              {pagedTasks.map((item) => (
+                                <Table.Tr
+                                  key={`${item.spaceId}-${item.id}`}
+                                  className="tasks-overview-row"
+                                  tabIndex={0}
+                                  onClick={() => navigateTo(`/tasks/${item.id}`)}
+                                  onKeyDown={(event) => {
+                                    if (event.key === "Enter" || event.key === " ") {
+                                      event.preventDefault();
+                                      navigateTo(`/tasks/${item.id}`);
+                                    }
+                                  }}
+                                >
+                                  <Table.Td>
+                                    <Stack gap={2}>
+                                      <Text fw={700} c="var(--app-text)" className="tasks-row-title">
+                                        {item.title}
+                                      </Text>
+                                    </Stack>
+                                  </Table.Td>
+                                  <Table.Td>
+                                    <Text c="var(--app-text)" className="tasks-row-space">
+                                      {item.spaceName}
+                                    </Text>
+                                  </Table.Td>
+                                  <Table.Td>
+                                    <Badge
+                                      variant="light"
+                                      color={taskStatusMeta[item.status].color}
+                                      className="tasks-status-badge"
+                                    >
+                                      {taskStatusMeta[item.status].label}
+                                    </Badge>
+                                  </Table.Td>
+                                  <Table.Td>
+                                    {item.assigneeUserId ? (
+                                      <Group gap="sm" wrap="nowrap">
+                                        <Avatar size={32} radius="xl" color="violet" variant="light">
+                                          {`${item.assigneeFirstName[0] ?? ""}${item.assigneeLastName[0] ?? ""}`}
+                                        </Avatar>
+                                        <Text c="var(--app-text)">
+                                          {`${item.assigneeFirstName} ${item.assigneeLastName}`}
+                                        </Text>
+                                      </Group>
+                                    ) : (
+                                      <Text c="var(--app-subtitle)">Unassigned</Text>
+                                    )}
+                                  </Table.Td>
+                                  <Table.Td>
+                                    <Text c="var(--app-text)">{formatShortDate(item.createdAt)}</Text>
+                                  </Table.Td>
+                                  <Table.Td>
+                                    <Group gap="xs" justify="flex-end" wrap="nowrap">
+                                      <ActionIcon
+                                        variant="subtle"
+                                        color="cyan"
+                                        aria-label="Open task"
+                                        onClick={(event) => {
+                                          event.stopPropagation();
+                                          navigateTo(`/tasks/${item.id}`);
+                                        }}
+                                      >
+                                        <IconPencil size={18} />
+                                      </ActionIcon>
+                                      {item.userId === meQuery.data.id ? (
+                                        <ActionIcon
+                                          variant="subtle"
+                                          color="red"
+                                          aria-label="Delete task"
+                                          onClick={(event) => {
+                                            event.stopPropagation();
+                                            setTaskDeleteTarget({
+                                              spaceId: item.spaceId,
+                                              taskId: item.id,
+                                              taskTitle: item.title,
+                                              fromDetail: false
+                                            });
+                                          }}
+                                        >
+                                          <IconTrash size={18} />
+                                        </ActionIcon>
+                                      ) : null}
+                                    </Group>
+                                  </Table.Td>
+                                </Table.Tr>
+                              ))}
+                            </Table.Tbody>
+                          </Table>
+                        </Box>
+
+                        {visibleTasks.length > TASKS_ITEMS_PER_PAGE ? (
+                          <Group justify="center">
+                            <Pagination
+                              value={tasksPage}
+                              onChange={(nextPage) => {
+                                setTasksPage(nextPage);
+                                const params = new URLSearchParams(currentSearch);
+                                if (nextPage <= 1) {
+                                  params.delete("page");
+                                } else {
+                                  params.set("page", String(nextPage));
+                                }
+
+                                const nextSearch = params.toString();
+                                navigateTo(`/tasks${nextSearch ? `?${nextSearch}` : ""}`);
+                              }}
+                              total={totalTaskPages}
+                            />
+                          </Group>
+                        ) : null}
+                      </>
+                    ) : null}
+                  </Stack>
+                </Card>
               </Stack>
             ) : null}
 
@@ -4722,6 +5173,23 @@ function App() {
         centered
       >
         <Stack>
+          {!activitySpaceId ? (
+            <Select
+              data-test-id="add-task-space-select"
+              label="Space"
+              placeholder="Choose a space"
+              className="todo-input"
+              value={newTaskSpaceId}
+              onChange={(value) => {
+                setNewTaskSpaceId(value ?? "");
+                setNewTaskAssignee("unassigned");
+              }}
+              data={((spacesQuery.data ?? []).map((space) => ({
+                value: String(space.id),
+                label: space.name
+              })) as Array<{ value: string; label: string }>)}
+            />
+          ) : null}
           <TextInput
             data-test-id="add-task-title-input"
             label="Task title"
@@ -4760,7 +5228,7 @@ function App() {
             onChange={(value) => setNewTaskAssignee(value ?? "unassigned")}
             data={[
               { value: "unassigned", label: "Unassigned" },
-              ...((activityMembersQuery.data ?? []).map((member) => ({
+              ...((taskModalMembersQuery.data ?? []).map((member) => ({
                 value: String(member.userId),
                 label: `${member.firstName} ${member.lastName} (${member.email})`
               })) as Array<{ value: string; label: string }>)
@@ -4768,11 +5236,11 @@ function App() {
           />
           <Button
             data-test-id="add-task-submit-button"
-            disabled={!newTaskTitle.trim() || !activitySpaceId}
+            disabled={!newTaskTitle.trim() || !taskModalSpaceId}
             loading={createTodoMutation.isPending}
             onClick={() =>
               createTodoMutation.mutate({
-                spaceId: activitySpaceId as number,
+                spaceId: taskModalSpaceId as number,
                 taskTitle: newTaskTitle,
                 taskDescription: newTaskDescription,
                 taskStatus: newTaskStatus,
