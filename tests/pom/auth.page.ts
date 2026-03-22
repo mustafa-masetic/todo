@@ -20,6 +20,7 @@ export class AuthPage {
 
   async gotoLogin() {
     await this.page.goto("/login");
+    await expect(this.page.getByTestId("auth-email-input")).toBeVisible();
   }
 
   async gotoRegister() {
@@ -51,17 +52,26 @@ export class AuthPage {
   async login(
     email: string,
     password: string,
-    options?: {
-      waitForAuthenticatedUi?: boolean;
-    }
   ) {
+    await this.gotoLogin();
+
     await this.page.getByTestId("auth-email-input").fill(email);
     await this.page.getByTestId("auth-password-input").fill(password);
     await this.page.getByTestId("auth-submit-button").click();
+  }
 
-    if (options?.waitForAuthenticatedUi ?? true) {
-      await this.expectAuthenticatedUi();
-    }
+  async loginExpectSuccess(email: string, password: string) {
+    await this.login(email, password);
+    await this.expectAuthenticatedUi();
+  }
+
+  async loginExpectFailure(email: string, password: string) {
+    await this.login(email, password);
+    await expect(
+      this.page.getByRole("alert").filter({
+        has: this.page.getByText("Invalid credentials.")
+      })
+    ).toBeVisible();
   }
 
   async register(

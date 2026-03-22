@@ -46,7 +46,6 @@ test.describe("Admin", () => {
     await nav.goToAdmin();
     await adminPage.openSpacesTab();
     await adminPage.searchSpaces(originalName);
-    //await page.pause();
     await adminPage.openSpaceEdit(originalName);
     await adminPage.saveSpaceEdit({
       name: updatedName,
@@ -55,6 +54,11 @@ test.describe("Admin", () => {
 
     await adminPage.searchSpaces(updatedName);
     await expect(adminPage.spaceRow(updatedName)).toBeVisible();
+
+    await nav.goToSpaces();
+    await spacesPage.openSpaceByName(updatedName);
+    await spacesPage.deleteCurrentSpace();
+    await spacesPage.expectSpaceDeletedToast();
   });
 
   test("admin can edit a task and change status from the task modal", async ({ page }) => {
@@ -88,5 +92,10 @@ test.describe("Admin", () => {
 
     await adminPage.searchTasks(updatedTitle);
     await expect(adminPage.taskRow(updatedTitle)).toContainText("Done");
+
+    await nav.goToSpaces();
+    await spacesPage.openSpaceByName(spaceName);
+    await spacesPage.deleteCurrentSpace();
+    await spacesPage.expectSpaceDeletedToast();
   });
 });

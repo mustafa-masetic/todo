@@ -11,9 +11,7 @@ test.describe("Auth Negative", () => {
     });
 
     await authPage.gotoLogin();
-    await authPage.login("invalid.user@example.com", "WrongPass123!", {
-      waitForAuthenticatedUi: false
-    });
+    await authPage.loginExpectFailure("invalid.user@example.com", "WrongPass123!");
 
     await expect(page).toHaveURL(/\/login$/);
     await expect(page.getByTestId("auth-submit-button")).toBeVisible();

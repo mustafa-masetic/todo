@@ -78,6 +78,13 @@ export class AdminPage {
     await expect(this.page.getByRole("dialog", { name: "Reset password" })).toBeVisible();
   }
 
+  async deleteUser(email: string) {
+    await this.userRow(email).getByLabel("Delete user").click();
+    const dialog = this.page.getByRole("dialog", { name: "Delete user?" });
+    await expect(dialog).toBeVisible();
+    await dialog.getByTestId("delete-user-confirm-button").click();
+  }
+
   async submitPasswordReset(password: string) {
     const dialog = this.page.getByRole("dialog", { name: "Reset password" });
     await dialog.getByLabel("New password").fill(password);

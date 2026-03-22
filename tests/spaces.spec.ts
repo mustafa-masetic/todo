@@ -1,9 +1,13 @@
 import { randomUUID } from "node:crypto";
 import { expect, test } from "./fixtures/auth-session";
+import { AdminPage } from "./pom/admin.page";
 import { AuthPage } from "./pom/auth.page";
 import { NavigationComponent } from "./pom/navigation.component";
 import { SpacesPage } from "./pom/spaces.page";
 import { ensurePageLoaded } from "./utils/page";
+
+const adminEmail = process.env.E2E_EMAIL;
+const adminPassword = process.env.E2E_PASSWORD;
 
 test.describe("Spaces", () => {
   test.use({
@@ -60,6 +64,7 @@ test.describe("Spaces", () => {
   });
 
   test("space members tab supports search and invite flow", async ({ page, browser, baseURL }) => {
+    const adminPage = new AdminPage(page);
     const nav = new NavigationComponent(page);
     const spacesPage = new SpacesPage(page);
     const unique = randomUUID();
@@ -73,38 +78,51 @@ test.describe("Spaces", () => {
     const invitedUserPage = await invitedUserContext.newPage();
     const invitedUserAuth = new AuthPage(invitedUserPage);
 
-    try {
-      await invitedUserAuth.gotoRegister();
-      await invitedUserAuth.register({
-        email: invitedUserEmail,
-        firstName: "Invite",
-        lastName: "Member",
-        gender: "Other",
-        password: invitedUserPassword
-      });
+    await invitedUserAuth.gotoRegister();
+    await invitedUserAuth.register({
+      email: invitedUserEmail,
+      firstName: "Invite",
+      lastName: "Member",
+      gender: "Other",
+      password: invitedUserPassword
+    });
 
-      await ensurePageLoaded(page);
-      await nav.themeToggle().waitFor({ state: "visible" });
-      await nav.goToSpaces();
-      await spacesPage.createSpace(spaceName, "Members flow space");
-      await spacesPage.openSpaceByName(spaceName);
+    await ensurePageLoaded(page);
+    await nav.themeToggle().waitFor({ state: "visible" });
+    await nav.goToSpaces();
+    await spacesPage.createSpace(spaceName, "Members flow space");
+    await spacesPage.openSpaceByName(spaceName);
 
-      await page.getByRole("tab", { name: /Members \(/ }).click();
-      await page.getByPlaceholder("Search members...").fill("Space");
-      await expect(page.getByText("Space Tester", { exact: true })).toBeVisible();
+    await page.getByRole("tab", { name: /Members \(/ }).click();
+    await page.getByPlaceholder("Search members...").fill("Space");
+    await expect(page.getByText("Space Tester", { exact: true })).toBeVisible();
 
-      await page.getByPlaceholder("Search members...").fill("");
-      await page.getByTestId("space-invite-people-button").click();
-      const inviteModal = page.getByTestId("invite-modal");
-      await inviteModal.getByTestId("invite-search-input").fill(invitedUserEmail);
-      await expect(inviteModal.getByText(invitedUserEmail, { exact: true })).toBeVisible();
-      await inviteModal.getByRole("button", { name: "Invite" }).click();
-      await expect(page.getByText("Invite sent")).toBeVisible();
+    await page.getByPlaceholder("Search members...").fill("");
+    await page.getByTestId("space-invite-people-button").click();
+    const inviteModal = page.getByTestId("invite-modal");
+    await inviteModal.getByTestId("invite-search-input").fill(invitedUserEmail);
+    await expect(inviteModal.getByText(invitedUserEmail, { exact: true })).toBeVisible();
+    await inviteModal.getByRole("button", { name: "Invite" }).click();
+    await expect(page.getByText("Invite sent")).toBeVisible();
 
-      await expect(page.getByText(invitedUserEmail, { exact: true })).toBeVisible();
-      await expect(page.getByText("Invited", { exact: true })).toBeVisible();
-    } finally {
-      await invitedUserContext.close().catch(() => {});
+    await expect(page.getByText(invitedUserEmail, { exact: true })).toBeVisible();
+    await expect(page.getByText("Invited", { exact: true })).toBeVisible();
+
+    await invitedUserContext.close();
+
+    await nav.goToSpaces();
+    await spacesPage.searchSpaces(spaceName);
+    await spacesPage.openSpaceByName(spaceName);
+    await spacesPage.deleteCurrentSpace();
+    await spacesPage.expectSpaceDeletedToast();
+
+    if (adminEmail && adminPassword) {
+      await nav.logout();
+      await new AuthPage(page).loginExpectSuccess(adminEmail, adminPassword);
+      await nav.goToAdmin();
+      await adminPage.openUsersTab();
+      await adminPage.searchUsers(invitedUserEmail);
+      await adminPage.deleteUser(invitedUserEmail);
     }
   });
 });

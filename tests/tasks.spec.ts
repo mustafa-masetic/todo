@@ -43,6 +43,9 @@ test.describe("Tasks", () => {
     await taskDetail.expectTaskUpdatedToast();
 
     await page.screenshot({ path: "task-updated.png" });
+
+    await taskDetail.deleteTask();
+    await taskDetail.expectTaskDeletedToast();
   });
 
   test("creates and deletes a task", async ({ page }) => {
@@ -124,5 +127,10 @@ test.describe("Tasks", () => {
     await expect(page.getByText(inProgressTitle, { exact: true })).toBeVisible();
     await expect(page.getByText(createdTitle, { exact: true })).toHaveCount(0);
     await expect(page.getByText(doneTitle, { exact: true })).toHaveCount(0);
+
+    await nav.goToSpaces();
+    await spacesPage.openSpaceByName(spaceName);
+    await spacesPage.deleteCurrentSpace();
+    await spacesPage.expectSpaceDeletedToast();
   });
 });

@@ -3,6 +3,14 @@ import { expect, type Page } from "@playwright/test";
 export class TaskDetailPage {
   constructor(private readonly page: Page) {}
 
+  private async expectAndDismissToast(testId: string) {
+    const toast = this.page.getByTestId(testId).last();
+
+    await expect(toast).toBeVisible();
+    await toast.getByRole("button").click();
+    await expect(toast).toBeHidden();
+  }
+
   async addTask(params: { title: string; description: string }) {
     await this.page.getByTestId("space-add-task-button").click();
     await this.page.getByTestId("add-task-title-input").fill(params.title);
@@ -28,7 +36,7 @@ export class TaskDetailPage {
   }
 
   async expectTaskUpdatedToast() {
-    await expect(this.page.getByText("Task updated").first()).toBeVisible();
+    await this.expectAndDismissToast("task-updated-toast");
   }
 
   async deleteTask() {
@@ -37,6 +45,6 @@ export class TaskDetailPage {
   }
 
   async expectTaskDeletedToast() {
-    await expect(this.page.getByText("Task deleted")).toBeVisible();
+    await this.expectAndDismissToast("task-deleted-toast");
   }
 }

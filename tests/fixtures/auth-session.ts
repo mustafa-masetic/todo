@@ -103,14 +103,14 @@ async function createStorageState(
   try {
     if (authSession.mode === "login") {
       await authPage.gotoLogin();
-      await authPage.login(authSession.email, authSession.password);
+      await authPage.loginExpectSuccess(authSession.email, authSession.password);
     } else {
       await authPage.gotoRegister();
       await authPage.register(authSession, { waitForAuthenticatedUi: false });
 
       if ((await isAlreadyRegisteredErrorVisible(page)) || !(await isAuthenticated(page))) {
         await authPage.gotoLogin();
-        await authPage.login(authSession.email, authSession.password);
+        await authPage.loginExpectSuccess(authSession.email, authSession.password);
       }
     }
 
