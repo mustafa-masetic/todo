@@ -97,6 +97,7 @@ import {
   updateAdminUser,
   updateMe,
   updateSettings,
+  updateSpace,
   updateTask,
   type ProfilePayload,
   type SettingsPayload
@@ -288,6 +289,11 @@ function App() {
   const [spaceDeleteTarget, setSpaceDeleteTarget] = useState<{
     spaceId: number;
     spaceName: string;
+  } | null>(null);
+  const [spaceEditTarget, setSpaceEditTarget] = useState<{
+    spaceId: number;
+    name: string;
+    description: string;
   } | null>(null);
   const [adminUserDeleteTarget, setAdminUserDeleteTarget] = useState<{
     userIds: number[];
@@ -794,6 +800,38 @@ function App() {
       notifications.show({
         color: "red",
         title: "Could not create space",
+        message: error.message
+      });
+    }
+  });
+
+  const updateSpaceMutation = useMutation({
+    mutationFn: ({
+      spaceId,
+      name,
+      description
+    }: {
+      spaceId: number;
+      name: string;
+      description: string;
+    }) => updateSpace(spaceId, { name, description }),
+    onSuccess: (space) => {
+      setSpaceEditTarget(null);
+      queryClient.invalidateQueries({ queryKey: ["spaces"] });
+      queryClient.invalidateQueries({ queryKey: ["activity-todos"] });
+      queryClient.invalidateQueries({ queryKey: ["activity-members"] });
+      queryClient.invalidateQueries({ queryKey: ["activity-invites"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      notifications.show({
+        color: "teal",
+        title: "Space updated",
+        message: `${space.name} has been updated.`
+      });
+    },
+    onError: (error: Error) => {
+      notifications.show({
+        color: "red",
+        title: "Space update failed",
         message: error.message
       });
     }
@@ -2420,9 +2458,9 @@ function App() {
                         <Loader size="sm" />
                       </Group>
                     ) : (homeTasksQuery.data?.items ?? []).length === 0 ? (
-                      <Box className="home-empty-card">
+                      <Card withBorder className="surface-card home-empty-card">
                         <Text c="var(--app-subtitle)">No tasks yet.</Text>
-                      </Box>
+                      </Card>
                     ) : (
                       <Stack gap={0}>
                         {(homeTasksQuery.data?.items ?? []).slice(0, 5).map((item, index) => (
@@ -3446,7 +3484,11 @@ function App() {
                             <Title order={1} className="space-detail-title">
                               {activitySpace.name}
                             </Title>
-                            <Text c="var(--app-subtitle)" className="space-detail-description">
+                            <Text
+                              c="var(--app-subtitle)"
+                              className="space-detail-description"
+                              style={{ whiteSpace: "pre-wrap" }}
+                            >
                               {activitySpace.description || "No description provided for this space yet."}
                             </Text>
                           </Stack>
@@ -3464,6 +3506,20 @@ function App() {
                               </ActionIcon>
                             </Menu.Target>
                             <Menu.Dropdown>
+                              {activitySpace.role === "owner" ? (
+                                <Menu.Item
+                                  leftSection={<IconWriting size={15} />}
+                                  onClick={() =>
+                                    setSpaceEditTarget({
+                                      spaceId: activitySpace.id,
+                                      name: activitySpace.name,
+                                      description: activitySpace.description
+                                    })
+                                  }
+                                >
+                                  Edit space
+                                </Menu.Item>
+                              ) : null}
                               {activitySpace.role === "owner" ? (
                                 <Menu.Item
                                   leftSection={<IconUsers size={15} />}
@@ -3745,7 +3801,11 @@ function App() {
                                         Created {formatShortDate(todo.createdAt)}
                                       </Text>
                                       <Text size="sm" c="var(--app-subtitle)">
-                                        {todo.assigneeUserId ? "Assigned" : "Unassigned"}
+                                        {todo.assigneeUserId
+                                          ? (`${todo.assigneeFirstName || ""} ${todo.assigneeLastName || ""}`.trim() ||
+                                            todo.assigneeEmail ||
+                                            "Assigned")
+                                          : "Unassigned"}
                                       </Text>
                                     </Group>
                                   </Stack>
@@ -4374,6 +4434,76 @@ function App() {
               }}
             >
               Delete task
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
+      <Modal
+        opened={Boolean(spaceEditTarget)}
+        onClose={() => setSpaceEditTarget(null)}
+        title="Edit space"
+        centered
+      >
+        <Stack>
+          <TextInput
+            className="todo-input"
+            label="Space name"
+            value={spaceEditTarget?.name ?? ""}
+            onChange={(event) =>
+              setSpaceEditTarget((prev) =>
+                prev
+                  ? {
+                      ...prev,
+                      name: event.currentTarget.value
+                    }
+                  : prev
+              )
+            }
+          />
+          <Textarea
+            className="todo-input"
+            label="Description"
+            autosize
+            minRows={5}
+            value={spaceEditTarget?.description ?? ""}
+            onChange={(event) =>
+              setSpaceEditTarget((prev) =>
+                prev
+                  ? {
+                      ...prev,
+                      description: event.currentTarget.value
+                    }
+                  : prev
+              )
+            }
+          />
+          <Group justify="flex-end">
+            <Button variant="light" onClick={() => setSpaceEditTarget(null)}>
+              Cancel
+            </Button>
+            <Button
+              loading={updateSpaceMutation.isPending}
+              onClick={() => {
+                if (!spaceEditTarget) {
+                  return;
+                }
+                const name = spaceEditTarget.name.trim();
+                if (name.length < 2) {
+                  notifications.show({
+                    color: "red",
+                    title: "Validation failed",
+                    message: "Space name must be at least 2 characters."
+                  });
+                  return;
+                }
+                updateSpaceMutation.mutate({
+                  spaceId: spaceEditTarget.spaceId,
+                  name,
+                  description: spaceEditTarget.description.trim()
+                });
+              }}
+            >
+              Save changes
             </Button>
           </Group>
         </Stack>

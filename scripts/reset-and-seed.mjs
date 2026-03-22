@@ -1,9 +1,14 @@
 import { spawn } from 'node:child_process';
 import process from 'node:process';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const root = '/Users/mustafamasetic/git/todo-app';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const root = path.resolve(__dirname, '..');
 const port = process.env.SEED_PORT || '4100';
-const baseUrl = `http://localhost:${port}`;
+const explicitBaseUrl = process.env.SEED_API_BASE_URL?.trim() || '';
+const baseUrl = explicitBaseUrl || `http://localhost:${port}`;
 
 function run(cmd, args, opts = {}) {
   return new Promise((resolve, reject) => {
@@ -44,6 +49,17 @@ async function waitForHealth(url, timeoutMs = 30000) {
 async function main() {
   console.log('1) Recreating test-data and cleaning database...');
   await run('pnpm', ['run', 'create:data']);
+
+  if (explicitBaseUrl) {
+    console.log(`2) Using existing server at ${baseUrl}...`);
+    await waitForHealth(baseUrl);
+    console.log(`3) Seeding via API at ${baseUrl}...`);
+    await run('pnpm', ['run', 'seed:data'], {
+      env: { SEED_API_BASE_URL: baseUrl }
+    });
+    console.log('Seed completed successfully.');
+    return;
+  }
 
   console.log('2) Building server...');
   await run('pnpm', ['--filter', './server', 'build']);

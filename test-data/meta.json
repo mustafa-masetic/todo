@@ -1,11 +1,13 @@
 {
-  "generatedAt": "2026-03-07T11:21:20.227Z",
+  "generatedAt": "2026-03-22T08:25:39.329Z",
   "counts": {
     "users": 10,
     "spaces": 20,
     "tasks": 130
   },
-  "cleanedDatabaseFiles": [],
+  "cleanedDatabaseFiles": [
+    "server/data/todo.db"
+  ],
   "notes": [
     "Passwords are plain-text fixture values intended only for local test seeding.",
     "Use email fields as stable keys when importing via API.",

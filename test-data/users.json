@@ -2,7 +2,7 @@
   {
     "id": 1,
     "firstName": "Mustafa",
-    "lastName": "Masetic",
+    "lastName": "Mašetić",
     "gender": "male",
     "email": "mustafa.masetic@example.com",
     "avatarUrl": "https://api.dicebear.com/9.x/initials/svg?seed=Mustafa%20Masetic",

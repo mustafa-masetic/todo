@@ -18,6 +18,9 @@ import type {
 } from "./types";
 
 const TOKEN_KEY = "todo-flow-auth-token";
+const API_BASE_URL = (
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:4000"
+).replace(/\/$/, "");
 
 export type ProfilePayload = {
   firstName: string;
@@ -63,7 +66,7 @@ async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
     headers.set("Content-Type", "application/json");
   }
 
-  const response = await fetch(path, {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
     ...init,
     headers
   });
@@ -297,6 +300,16 @@ export function getSpaces(): Promise<Space[]> {
 export function createSpace(payload: { name: string; description: string }): Promise<Space> {
   return apiRequest<Space>("/api/spaces", {
     method: "POST",
+    body: JSON.stringify(payload)
+  });
+}
+
+export function updateSpace(
+  spaceId: number,
+  payload: { name: string; description: string }
+): Promise<Space> {
+  return apiRequest<Space>(`/api/spaces/${spaceId}`, {
+    method: "PATCH",
     body: JSON.stringify(payload)
   });
 }

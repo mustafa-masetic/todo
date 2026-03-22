@@ -188,18 +188,7 @@ jobs:
       - name: Prepare Playwright report for Pages
         if: always()
         run: |
-          mkdir -p pages-playwright-report
-          if [ -d playwright-report ]; then
-            cp -R playwright-report/. pages-playwright-report/
-          else
-            printf '%s\n' \
-              '<html>' \
-              '  <body>' \
-              '    <h1>Playwright report not available</h1>' \
-              '    <p>The test run failed before generating an HTML report.</p>' \
-              '  </body>' \
-              '</html>' > pages-playwright-report/index.html
-          fi
+          pnpm run build:pages
 
       - name: Upload Playwright report
         if: always()
@@ -215,7 +204,7 @@ jobs:
         if: always()
         uses: actions/upload-pages-artifact@v3
         with:
-          path: pages-playwright-report
+          path: pages-site
 
   deploy_playwright_report_pages:
     runs-on: ubuntu-latest

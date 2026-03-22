@@ -1,8 +1,8 @@
 [
   {
     "id": 1,
-    "name": "Apollo Launch Ops",
-    "description": "Coordinate launch milestones, risks, and rollout readiness across product teams.",
+    "name": "Platform Reliability & Incident Management",
+    "description": "🚨 Improve incident readiness across the platform.\n\nFocus areas:\n- service ownership and escalation paths\n- on-call handoff quality\n- postmortem follow-through\n\nThe goal is to reduce noisy response patterns and make recovery work feel structured instead of improvised.\n\nCurrent priorities:\n- define service boundaries more clearly\n- reduce repeated coordination gaps during incidents\n- create a tighter loop between operational issues and engineering backlog\n\nSuccess here should be visible in calmer incident handling, clearer ownership, and fewer unresolved follow-up items after production events.",
     "ownerUserId": 1,
     "ownerEmail": "mustafa.masetic@example.com",
     "members": [
@@ -23,8 +23,8 @@
   },
   {
     "id": 2,
-    "name": "Beacon Design Studio",
-    "description": "Own visual design systems, experiments, and product UX polish initiatives.",
+    "name": "CI/CD Optimization & Test Automation",
+    "description": "⚙️ Modernize CI/CD so releases are faster and less stressful.\n\nThis space covers pipeline bottlenecks, flaky quality gates, build parallelization, and safer deployment checks.\n\nExpected outcome:\nshorter feedback loops, fewer broken mainline builds, and more confidence before shipping.\n\nCurrent priorities:\n- identify the slowest pipeline stages\n- standardize pre-merge validation expectations\n- make release automation easier to trust across teams\n\nA strong result would mean engineers spend less time waiting on feedback and less time investigating broken delivery paths.",
     "ownerUserId": 2,
     "ownerEmail": "lena.kovac@example.com",
     "members": [
@@ -49,8 +49,8 @@
   },
   {
     "id": 3,
-    "name": "Catalyst Growth Lab",
-    "description": "Drive growth loops, campaign experiments, and activation performance goals.",
+    "name": "Project Delivery & Sprint Planning",
+    "description": "📅 Keep project delivery visible and executable.\n\nWork here is centered around sprint planning, milestone tracking, dependency management, and unblocker follow-up.\n\nIt should help engineering and product stay aligned without turning status tracking into overhead.\n\nCurrent priorities:\n- surface blocked work earlier\n- keep sprint goals stable once work begins\n- improve cross-functional communication when scope shifts\n\nThis space should feel like the operational center for predictable execution rather than another passive reporting layer.",
     "ownerUserId": 3,
     "ownerEmail": "marcus.reed@example.com",
     "members": [
@@ -79,8 +79,8 @@
   },
   {
     "id": 4,
-    "name": "Delta Platform Core",
-    "description": "Maintain shared platform services, APIs, and reliability standards.",
+    "name": "QA Strategy & Regression Coverage",
+    "description": "🧪 Define a real QA strategy instead of relying on ad hoc regression.\n\nThis includes test layers, release criteria, smoke coverage, exploratory testing boundaries, and ownership of critical scenarios.\n\nThe intent is to make quality work deliberate, repeatable, and easier to explain to stakeholders.\n\nCurrent priorities:\n- document critical user journeys that always need protection\n- separate smoke, regression, and exploratory responsibilities\n- align release decisions with actual evidence instead of intuition\n\nIf this space works well, teams should be able to explain quality coverage with much more precision.",
     "ownerUserId": 4,
     "ownerEmail": "priya.patel@example.com",
     "members": [
@@ -101,8 +101,8 @@
   },
   {
     "id": 5,
-    "name": "Echo Customer Success",
-    "description": "Manage onboarding quality, churn interventions, and customer health playbooks.",
+    "name": "Release Readiness & Change Control",
+    "description": "🚀 Prepare changes for production in a disciplined way.\n\nThis space is for release checklists, communication plans, rollback expectations, and change approval flow.\n\nIt should answer one question clearly:\nare we actually ready to ship this safely?\n\nCurrent priorities:\n- make go/no-go decisions easier to justify\n- ensure rollback expectations exist before launch day\n- reduce confusion around who communicates what and when\n\nThe broader purpose is to turn releases into a repeatable practice instead of a last-minute coordination scramble.",
     "ownerUserId": 5,
     "ownerEmail": "noah.nolan@example.com",
     "members": [
@@ -127,8 +127,8 @@
   },
   {
     "id": 6,
-    "name": "Flux Marketing Guild",
-    "description": "Plan channel strategy, launch assets, and weekly performance analysis.",
+    "name": "Developer Experience Improvements",
+    "description": "🛠️ Make daily developer work less painful.\n\nTypical themes:\n- local environment setup\n- tooling friction\n- slow feedback loops\n- internal platform rough edges\n\nSmall improvements here should compound into much faster engineering throughput.\n\nCurrent priorities:\n- remove unnecessary local setup complexity\n- fix the internal pain points engineers repeatedly work around\n- improve the ergonomics of common development tasks\n\nThe value here comes from small friction cuts that save time every single week.",
     "ownerUserId": 6,
     "ownerEmail": "iris.berg@example.com",
     "members": [
@@ -157,8 +157,8 @@
   },
   {
     "id": 7,
-    "name": "Glacier Data Engineering",
-    "description": "Build ETL flows, warehouse models, and reporting reliability foundations.",
+    "name": "Frontend Architecture & Design Systems",
+    "description": "🎨 Maintain a frontend foundation that stays consistent as the product grows.\n\nThat means shared components, accessibility rules, UI implementation patterns, and visual system decisions all live here.\n\nThe space should reduce repeated design debt and keep feature teams moving in the same direction.\n\nCurrent priorities:\n- reduce one-off UI implementations\n- clarify the default approach for accessibility and responsive behavior\n- make the shared component layer easier to adopt correctly\n\nThis space should help teams ship faster without fragmenting the frontend experience.",
     "ownerUserId": 7,
     "ownerEmail": "mateo.alvarez@example.com",
     "members": [
@@ -179,8 +179,8 @@
   },
   {
     "id": 8,
-    "name": "Harbor Security Response",
-    "description": "Triage incidents, harden posture, and improve response playbooks.",
+    "name": "Backend APIs & Integration Contracts",
+    "description": "🔌 Keep backend integrations predictable.\n\nTopics include API contracts, versioning rules, integration failure handling, and service-to-service expectations.\n\nThis is where teams should align before shipping interface changes that could break downstream consumers.\n\nCurrent priorities:\n- make interface changes safer to introduce\n- document expectations for consumers before releases happen\n- reduce ambiguity in error handling and version compatibility\n\nThe desired outcome is fewer integration surprises and cleaner collaboration across backend boundaries.",
     "ownerUserId": 8,
     "ownerEmail": "amina.hassan@example.com",
     "members": [
@@ -205,8 +205,8 @@
   },
   {
     "id": 9,
-    "name": "Ion Mobile Experience",
-    "description": "Ship mobile feature sets and improve cross-platform interaction quality.",
+    "name": "Mobile App Quality & Release Safety",
+    "description": "📱 Improve mobile delivery quality across devices and releases.\n\nThe work spans crash monitoring, platform-specific bugs, rollout safety, and regression areas that frequently break on mobile.\n\nThe objective is not just fewer bugs, but more confidence in each release train.\n\nCurrent priorities:\n- define a reliable mobile regression surface\n- reduce release risk from device-specific issues\n- connect crash patterns back to actionable engineering work\n\nThe long-term goal is to make mobile quality feel measurable and actively managed.",
     "ownerUserId": 9,
     "ownerEmail": "jonah.frost@example.com",
     "members": [
@@ -235,8 +235,8 @@
   },
   {
     "id": 10,
-    "name": "Juno Sales Enablement",
-    "description": "Create collateral, playbooks, and enablement sessions for account teams.",
+    "name": "Test Data Management Strategy",
+    "description": "🧬 Build a cleaner strategy for test data.\n\nThis space covers seeded fixtures, isolated datasets, cleanup routines, and environment-safe data generation.\n\nIt should make tests easier to trust and reduce time wasted debugging state pollution.\n\nCurrent priorities:\n- reduce the cost of preparing valid test data\n- make fixture setup more predictable across local and CI environments\n- isolate test state so failures are easier to trust and diagnose\n\nThis space should make automated tests less fragile and much easier to reason about.",
     "ownerUserId": 10,
     "ownerEmail": "sofia.silva@example.com",
     "members": [
@@ -257,8 +257,8 @@
   },
   {
     "id": 11,
-    "name": "Kepler Analytics Board",
-    "description": "Define KPI governance, attribution rules, and leadership dashboards.",
+    "name": "Observability & Monitoring",
+    "description": "📊 Strengthen observability so issues are visible before customers report them.\n\nThis includes logs, traces, dashboards, SLO signals, and alert tuning.\n\nA good outcome here is faster diagnosis, calmer incident handling, and better production intuition.\n\nCurrent priorities:\n- remove noisy signals from dashboards and alerts\n- improve traceability across important user flows\n- ensure system behavior is explainable during incidents\n\nWhen this work is healthy, teams should spend less time guessing and more time validating facts quickly.",
     "ownerUserId": 1,
     "ownerEmail": "mustafa.masetic@example.com",
     "members": [
@@ -283,8 +283,8 @@
   },
   {
     "id": 12,
-    "name": "Lumen Content Pipeline",
-    "description": "Publish educational content and automate internal content operations.",
+    "name": "Security Hardening & Access Reviews",
+    "description": "🔐 Review security posture with practical engineering follow-through.\n\nWork includes permission audits, secret handling, access reviews, and baseline hardening.\n\nThe emphasis is on useful safeguards that teams will actually keep up to date.\n\nCurrent priorities:\n- tighten access rules where ownership is unclear\n- make security review work actionable for engineering teams\n- reduce the number of silent risky defaults in day-to-day workflows\n\nThis space should balance practical delivery needs with a more mature baseline for platform security.",
     "ownerUserId": 2,
     "ownerEmail": "lena.kovac@example.com",
     "members": [
@@ -313,8 +313,8 @@
   },
   {
     "id": 13,
-    "name": "Meridian Partner Network",
-    "description": "Expand partner onboarding, integrations, and co-marketing workflows.",
+    "name": "Performance Engineering & Load Testing",
+    "description": "🏎️ Measure and improve system performance under realistic load.\n\nUse this space for response-time analysis, bottleneck discovery, scalability planning, and load-test execution.\n\nThe aim is to move from vague concerns about performance to concrete, testable engineering actions.\n\nCurrent priorities:\n- make performance conversations based on data rather than anecdote\n- identify the most meaningful bottlenecks first\n- connect performance improvements to actual user or system impact\n\nThe purpose is not abstract optimization, but clearer technical decisions backed by evidence.",
     "ownerUserId": 3,
     "ownerEmail": "marcus.reed@example.com",
     "members": [
@@ -335,8 +335,8 @@
   },
   {
     "id": 14,
-    "name": "Nimbus QA Collective",
-    "description": "Own quality strategy, regression safety nets, and release confidence.",
+    "name": "Automation Framework Evolution",
+    "description": "🤖 Evolve the automation framework without letting it collapse under its own weight.\n\nThat means better abstractions, shared helpers, fixture design, reporting quality, and cleanup of brittle patterns.\n\nThis space should make automation easier to maintain as product complexity grows.\n\nCurrent priorities:\n- simplify automation maintenance as the suite grows\n- remove brittle patterns that slow down future changes\n- make shared tooling easier to understand for new contributors\n\nA healthier framework here should mean faster test authoring and fewer failures caused by the framework itself.",
     "ownerUserId": 4,
     "ownerEmail": "priya.patel@example.com",
     "members": [
@@ -361,8 +361,8 @@
   },
   {
     "id": 15,
-    "name": "Orion Billing Systems",
-    "description": "Run invoicing, collections workflows, and payment reliability projects.",
+    "name": "Cross-Team Technical Roadmap",
+    "description": "🗺️ Turn technical priorities into a roadmap teams can actually execute.\n\nThis is where cross-team sequencing, ownership, dependency management, and delivery tradeoffs are made visible.\n\nIt should connect strategy to practical implementation, not just presentation slides.\n\nCurrent priorities:\n- clarify what should happen now versus later\n- expose hidden sequencing risks between teams\n- connect technical investments to visible product or platform outcomes\n\nThis space should help roadmap discussions stay grounded in execution reality.",
     "ownerUserId": 5,
     "ownerEmail": "noah.nolan@example.com",
     "members": [
@@ -391,8 +391,8 @@
   },
   {
     "id": 16,
-    "name": "Pulse People Operations",
-    "description": "Improve hiring process operations, onboarding, and retention programs.",
+    "name": "Bug Triage & Defect Prevention",
+    "description": "🐞 Reduce defect churn by improving triage and prevention loops.\n\nUse this space for bug taxonomy, recurring issue analysis, fix validation, and process changes that prevent reintroduction.\n\nThe outcome should be fewer repeated classes of bugs and better learning from failure.\n\nCurrent priorities:\n- identify bug classes that recur too often\n- improve how issues are categorized and revisited\n- make prevention work as visible as fix work\n\nThe best outcome would be less repeated firefighting and stronger confidence that lessons are actually retained.",
     "ownerUserId": 6,
     "ownerEmail": "iris.berg@example.com",
     "members": [
@@ -413,8 +413,8 @@
   },
   {
     "id": 17,
-    "name": "Quantum Research Pod",
-    "description": "Explore prototypes, validate product hypotheses, and technical feasibility.",
+    "name": "Product Discovery & Technical Validation",
+    "description": "🔍 Explore product and engineering ideas before they become commitments.\n\nTechnical spikes, proof-of-concept work, unknown-risk mapping, and early validation all fit here.\n\nThe point is to learn quickly and make better investment decisions before full execution starts.\n\nCurrent priorities:\n- validate technical assumptions before delivery planning locks in\n- reduce uncertainty around implementation complexity\n- surface feasibility concerns early while options are still open\n\nThis space should support sharper decision-making before full project commitment begins.",
     "ownerUserId": 7,
     "ownerEmail": "mateo.alvarez@example.com",
     "members": [
@@ -439,8 +439,8 @@
   },
   {
     "id": 18,
-    "name": "Rift DevEx Squad",
-    "description": "Upgrade internal developer workflows, tooling, and pipeline speed.",
+    "name": "Documentation & Engineering Standards",
+    "description": "📚 Keep engineering knowledge visible and usable.\n\nThis space covers standards, playbooks, onboarding references, and decision records.\n\nIt should help new contributors ramp faster and reduce the amount of tribal knowledge hidden in chats or calls.\n\nCurrent priorities:\n- keep standards easy to find and easier to follow\n- improve onboarding quality for engineers joining existing systems\n- preserve key technical decisions in a durable, searchable form\n\nThis space becomes more valuable as the team grows and shared context becomes harder to maintain informally.",
     "ownerUserId": 8,
     "ownerEmail": "amina.hassan@example.com",
     "members": [
@@ -469,8 +469,8 @@
   },
   {
     "id": 19,
-    "name": "Summit Finance Control",
-    "description": "Track budgets, approvals, and monthly close controls.",
+    "name": "Infrastructure & Environment Provisioning",
+    "description": "☁️ Stabilize environments and provisioning workflows.\n\nTopics include infrastructure setup, ephemeral environments, deployment dependencies, and repeatable configuration.\n\nThe goal is to reduce manual setup and make delivery less dependent on individual engineers remembering hidden steps.\n\nCurrent priorities:\n- remove environment drift between teams and stages\n- simplify provisioning paths for development and testing\n- reduce manual intervention during setup and deployment work\n\nThe point is to make environments feel dependable enough that teams can focus on delivery rather than setup recovery.",
     "ownerUserId": 9,
     "ownerEmail": "jonah.frost@example.com",
     "members": [
@@ -491,8 +491,8 @@
   },
   {
     "id": 20,
-    "name": "Tango Release Train",
-    "description": "Coordinate release sequencing, communication, and rollout checklists.",
+    "name": "Program Management & Stakeholder Reporting",
+    "description": "📈 Provide program-level visibility without losing technical detail.\n\nUse this space for risk tracking, milestone reporting, dependency summaries, and stakeholder communication.\n\nIt should help translate engineering progress into something leadership can understand without flattening the real work.\n\nCurrent priorities:\n- make progress and risk legible to non-engineering partners\n- keep reporting anchored in actual delivery state\n- improve the quality of coordination across product, engineering, and leadership\n\nThis space should make communication clearer without disconnecting it from the technical realities underneath.",
     "ownerUserId": 10,
     "ownerEmail": "sofia.silva@example.com",
     "members": [

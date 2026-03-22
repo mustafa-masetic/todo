@@ -522,6 +522,39 @@ app.post("/api/spaces", requireAuth, (req, res) => {
   res.status(201).json(created);
 });
 
+app.patch("/api/spaces/:spaceId", requireAuth, (req, res) => {
+  const authReq = req as AuthedRequest;
+  const spaceId = Number(req.params.spaceId);
+  const name = String(req.body?.name || "").trim();
+  const description = String(req.body?.description || "").trim();
+
+  if (Number.isNaN(spaceId)) {
+    res.status(400).json({ message: "Invalid space id." });
+    return;
+  }
+
+  const role = requireSpaceMember(spaceId, authReq.authUser.userId);
+  if (role !== "owner") {
+    res.status(403).json({ message: "Only space owners can update spaces." });
+    return;
+  }
+
+  if (name.length < 2) {
+    res.status(400).json({ message: "Space name must be at least 2 characters." });
+    return;
+  }
+
+  spaceQueries.updateById.run(name, description, spaceId);
+  const updated = spaceQueries.getById.get(spaceId) as Space | undefined;
+
+  if (!updated) {
+    res.status(404).json({ message: "Space not found." });
+    return;
+  }
+
+  res.json(updated);
+});
+
 app.delete("/api/spaces/:spaceId", requireAuth, (req, res) => {
   const authReq = req as AuthedRequest;
   const spaceId = Number(req.params.spaceId);

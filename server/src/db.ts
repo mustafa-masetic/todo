@@ -76,6 +76,9 @@ export type Todo = {
   spaceId: number;
   userId: number;
   assigneeUserId: number | null;
+  assigneeFirstName: string;
+  assigneeLastName: string;
+  assigneeEmail: string;
   title: string;
   description: string;
   status: TaskStatus;
@@ -584,18 +587,22 @@ export const inviteQueries = {
 export const todoQueries = {
   getAllBySpace: db.prepare(
     `SELECT
-      id,
-      user_id as userId,
-      space_id as spaceId,
-      assignee_user_id as assigneeUserId,
-      title,
-      description,
-      status,
-      completed,
-      created_at as createdAt
-     FROM todos
-     WHERE space_id = ?
-     ORDER BY id DESC`
+      t.id,
+      t.user_id as userId,
+      t.space_id as spaceId,
+      t.assignee_user_id as assigneeUserId,
+      COALESCE(assignee.first_name, '') as assigneeFirstName,
+      COALESCE(assignee.last_name, '') as assigneeLastName,
+      COALESCE(assignee.email, '') as assigneeEmail,
+      t.title,
+      t.description,
+      t.status,
+      t.completed,
+     t.created_at as createdAt
+     FROM todos t
+     LEFT JOIN users assignee ON assignee.id = t.assignee_user_id
+     WHERE t.space_id = ?
+     ORDER BY t.id DESC`
   ),
   create: db.prepare(
     `INSERT INTO todos (user_id, space_id, assignee_user_id, title, description, status, completed)
@@ -603,17 +610,21 @@ export const todoQueries = {
   ),
   getByIdForSpace: db.prepare(
     `SELECT
-      id,
-      user_id as userId,
-      space_id as spaceId,
-      assignee_user_id as assigneeUserId,
-      title,
-      description,
-      status,
-      completed,
-      created_at as createdAt
-     FROM todos
-     WHERE id = ? AND space_id = ?`
+      t.id,
+      t.user_id as userId,
+      t.space_id as spaceId,
+      t.assignee_user_id as assigneeUserId,
+      COALESCE(assignee.first_name, '') as assigneeFirstName,
+      COALESCE(assignee.last_name, '') as assigneeLastName,
+      COALESCE(assignee.email, '') as assigneeEmail,
+      t.title,
+      t.description,
+      t.status,
+      t.completed,
+      t.created_at as createdAt
+     FROM todos t
+     LEFT JOIN users assignee ON assignee.id = t.assignee_user_id
+     WHERE t.id = ? AND t.space_id = ?`
   ),
   updateCompleted: db.prepare(
     `UPDATE todos

@@ -7,6 +7,9 @@ export type Todo = {
   spaceId: number;
   userId: number;
   assigneeUserId: number | null;
+  assigneeFirstName: string;
+  assigneeLastName: string;
+  assigneeEmail: string;
   title: string;
   description: string;
   status: TaskStatus;
