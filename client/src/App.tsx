@@ -4643,6 +4643,7 @@ function App() {
               Cancel
             </Button>
             <Button
+              data-test-id="delete-user-confirm-button"
               color="red"
               loading={adminBulkUsersMutation.isPending}
               onClick={() => {
