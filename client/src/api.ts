@@ -18,9 +18,7 @@ import type {
 } from "./types";
 
 const TOKEN_KEY = "todo-flow-auth-token";
-const API_BASE_URL = (
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:4000"
-).replace(/\/$/, "");
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/$/, "");
 
 export type ProfilePayload = {
   firstName: string;
