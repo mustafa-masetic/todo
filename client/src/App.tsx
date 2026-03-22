@@ -974,6 +974,7 @@ function App() {
         navigateTo("/tasks");
       }
       notifications.show({
+        "data-test-id": "task-deleted-toast",
         color: "teal",
         title: "Task deleted",
         message: "The task has been removed."
@@ -1010,6 +1011,7 @@ function App() {
       queryClient.invalidateQueries({ queryKey: ["todos"] });
       queryClient.invalidateQueries({ queryKey: ["admin-tasks"] });
       notifications.show({
+        "data-test-id": "task-updated-toast",
         color: "teal",
         title: "Task updated",
         message: "Task details have been saved."
