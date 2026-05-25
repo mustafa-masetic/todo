@@ -3,13 +3,16 @@ import { expect, test } from "./fixtures/auth-session";
 import { NavigationComponent } from "./pom/navigation.component";
 import { SpacesPage } from "./pom/spaces.page";
 import { TaskDetailPage } from "./pom/task-detail.page";
+import { deleteUserAsAdmin } from "./utils/admin-cleanup";
 import { ensurePageLoaded } from "./utils/page";
+
+const suiteEmail = "playwright.tasks@example.com";
 
 test.describe("Tasks", () => {
   test.use({
     authSession: {
       mode: "register",
-      email: "playwright.tasks@example.com",
+      email: suiteEmail,
       firstName: "Task",
       lastName: "Tester",
       gender: "Other",
@@ -132,5 +135,9 @@ test.describe("Tasks", () => {
     await spacesPage.openSpaceByName(spaceName);
     await spacesPage.deleteCurrentSpace();
     await spacesPage.expectSpaceDeletedToast();
+  });
+
+  test.afterAll(async ({ browser, baseURL }) => {
+    await deleteUserAsAdmin(browser, baseURL, suiteEmail);
   });
 });

@@ -4,16 +4,18 @@ import { AdminPage } from "./pom/admin.page";
 import { AuthPage } from "./pom/auth.page";
 import { NavigationComponent } from "./pom/navigation.component";
 import { SpacesPage } from "./pom/spaces.page";
+import { deleteUserAsAdmin } from "./utils/admin-cleanup";
 import { ensurePageLoaded } from "./utils/page";
 
 const adminEmail = process.env.E2E_EMAIL;
 const adminPassword = process.env.E2E_PASSWORD;
+const suiteEmail = "playwright.spaces@example.com";
 
 test.describe("Spaces", () => {
   test.use({
     authSession: {
       mode: "register",
-      email: "playwright.spaces@example.com",
+      email: suiteEmail,
       firstName: "Space",
       lastName: "Tester",
       gender: "Other",
@@ -124,5 +126,9 @@ test.describe("Spaces", () => {
       await adminPage.searchUsers(invitedUserEmail);
       await adminPage.deleteUser(invitedUserEmail);
     }
+  });
+
+  test.afterAll(async ({ browser, baseURL }) => {
+    await deleteUserAsAdmin(browser, baseURL, suiteEmail);
   });
 });

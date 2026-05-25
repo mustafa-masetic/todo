@@ -1,12 +1,15 @@
 import { expect, test } from "./fixtures/auth-session";
 import { NavigationComponent } from "./pom/navigation.component";
+import { deleteUserAsAdmin } from "./utils/admin-cleanup";
 import { ensurePageLoaded } from "./utils/page";
+
+const suiteEmail = "playwright.search@example.com";
 
 test.describe("Search", () => {
   test.use({
     authSession: {
       mode: "register",
-      email: "playwright.search@example.com",
+      email: suiteEmail,
       firstName: "Search",
       lastName: "Tester",
       gender: "Other",
@@ -39,5 +42,9 @@ test.describe("Search", () => {
 
     await page.keyboard.press("Escape");
     await expect(globalSearchInput).toBeHidden();
+  });
+
+  test.afterAll(async ({ browser, baseURL }) => {
+    await deleteUserAsAdmin(browser, baseURL, suiteEmail);
   });
 });

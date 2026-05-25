@@ -198,15 +198,6 @@ async function callLocalTool(name, args) {
       const passwordSelector =
         args.passwordSelector ||
         '[data-test-id="auth-password-input"], input[type="password"], input[name="password"], input[autocomplete="current-password"]';
-      const submitSelectorCandidates = args.submitSelector
-        ? [args.submitSelector]
-        : [
-            '[data-test-id="auth-submit-button"]',
-            'text=Sign in',
-            'text=Login',
-            'button[type="submit"]',
-            'button[type="button"]',
-          ];
 
       await callMcpTool("browser_click", {
         selector: emailSelector,
@@ -253,36 +244,19 @@ async function callLocalTool(name, args) {
       });
 
       await callMcpTool("browser_wait_for", {
-        seconds: 0.75,
+        seconds: 0.3,
       });
 
-      let clickedSelector = null;
-      let lastError = null;
-
-      for (const selector of submitSelectorCandidates) {
-        try {
-          await callMcpTool("browser_click", { selector });
-          clickedSelector = selector;
-          break;
-        } catch (error) {
-          lastError = error;
-        }
-      }
-
-      if (!clickedSelector) {
-        throw new Error(
-          `Submit button interaction failed for selectors: ${submitSelectorCandidates.join(", ")}. Last error: ${
-            lastError instanceof Error ? lastError.message : String(lastError)
-          }`
-        );
-      }
+      await callMcpTool("browser_press_key", {
+        key: "Enter",
+      });
 
       return {
         ok: true,
         email: args.email,
         passwordSource: "E2E_PASSWORD",
         submitted: true,
-        submitSelector: clickedSelector,
+        submitMethod: "Enter",
       };
     }
     default:

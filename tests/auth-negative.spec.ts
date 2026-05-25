@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 import { AuthPage } from "./pom/auth.page";
 import { HomePage } from "./pom/home.page";
 import { NavigationComponent } from "./pom/navigation.component";
+import { deleteUserAsAdmin } from "./utils/admin-cleanup";
 
 test.describe("Auth Negative", () => {
   test("rejects invalid login credentials", async ({ page }) => {
@@ -18,7 +19,7 @@ test.describe("Auth Negative", () => {
     await expect(authErrorAlert).toBeVisible();
   });
 
-  test("rejects duplicate registration email", async ({ page }) => {
+  test("rejects duplicate registration email", async ({ page, browser, baseURL }) => {
     const authPage = new AuthPage(page);
     const homePage = new HomePage(page);
     const nav = new NavigationComponent(page);
@@ -55,5 +56,7 @@ test.describe("Auth Negative", () => {
 
     await expect(page).toHaveURL(/\/register$/);
     await expect(alreadyRegisteredAlert).toBeVisible();
+
+    await deleteUserAsAdmin(browser, baseURL, email);
   });
 });
