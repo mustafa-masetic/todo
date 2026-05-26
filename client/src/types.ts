@@ -14,6 +14,41 @@ export type Todo = {
   description: string;
   status: TaskStatus;
   completed: number;
+  dueDate: string | null;
+  createdAt: string;
+};
+
+export type TaskComment = {
+  id: number;
+  taskId: number;
+  userId: number;
+  authorFirstName: string;
+  authorLastName: string;
+  authorEmail: string;
+  content: string;
+  createdAt: string;
+};
+
+export type TaskSubtask = {
+  id: number;
+  taskId: number;
+  title: string;
+  completed: number;
+  position: number;
+  createdAt: string;
+};
+
+export type TaskAttachment = {
+  id: number;
+  taskId: number;
+  fileName: string;
+  originalName: string;
+  mimeType: string;
+  sizeBytes: number;
+  uploadedByUserId: number;
+  uploaderFirstName: string;
+  uploaderLastName: string;
+  uploaderEmail: string;
   createdAt: string;
 };
 
@@ -30,6 +65,7 @@ export type TaskSearchResult = {
   description: string;
   status: TaskStatus;
   completed: number;
+  dueDate: string | null;
   createdAt: string;
 };
 

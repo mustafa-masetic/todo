@@ -9,9 +9,12 @@ import type {
   Space,
   SpaceInvite,
   SpaceMember,
+  TaskAttachment,
+  TaskComment,
   TaskListResponse,
   TaskSearchResult,
   TaskStatus,
+  TaskSubtask,
   Todo,
   UserLookupResult,
   User
@@ -283,12 +286,91 @@ export function updateTask(
     description?: string;
     status?: TaskStatus;
     assigneeUserId?: number | null;
+    dueDate?: string | null;
   }
 ): Promise<TaskSearchResult> {
   return apiRequest<TaskSearchResult>(`/api/tasks/${taskId}`, {
     method: "PATCH",
     body: JSON.stringify(payload)
   });
+}
+
+export function getSubtasks(taskId: number): Promise<TaskSubtask[]> {
+  return apiRequest<TaskSubtask[]>(`/api/tasks/${taskId}/subtasks`);
+}
+
+export function createSubtask(taskId: number, title: string): Promise<TaskSubtask> {
+  return apiRequest<TaskSubtask>(`/api/tasks/${taskId}/subtasks`, {
+    method: "POST",
+    body: JSON.stringify({ title })
+  });
+}
+
+export function updateSubtask(
+  taskId: number,
+  subtaskId: number,
+  payload: { completed?: boolean; title?: string }
+): Promise<TaskSubtask> {
+  return apiRequest<TaskSubtask>(`/api/tasks/${taskId}/subtasks/${subtaskId}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload)
+  });
+}
+
+export function deleteSubtask(taskId: number, subtaskId: number): Promise<void> {
+  return apiRequest<void>(`/api/tasks/${taskId}/subtasks/${subtaskId}`, {
+    method: "DELETE"
+  });
+}
+
+export function getComments(taskId: number): Promise<TaskComment[]> {
+  return apiRequest<TaskComment[]>(`/api/tasks/${taskId}/comments`);
+}
+
+export function createComment(taskId: number, content: string): Promise<TaskComment> {
+  return apiRequest<TaskComment>(`/api/tasks/${taskId}/comments`, {
+    method: "POST",
+    body: JSON.stringify({ content })
+  });
+}
+
+export function deleteComment(taskId: number, commentId: number): Promise<void> {
+  return apiRequest<void>(`/api/tasks/${taskId}/comments/${commentId}`, {
+    method: "DELETE"
+  });
+}
+
+export function getAttachments(taskId: number): Promise<TaskAttachment[]> {
+  return apiRequest<TaskAttachment[]>(`/api/tasks/${taskId}/attachments`);
+}
+
+export function uploadAttachment(taskId: number, file: File): Promise<TaskAttachment> {
+  const token = getStoredToken();
+  const formData = new FormData();
+  formData.append("file", file);
+  return fetch(`${API_BASE_URL}/api/tasks/${taskId}/attachments`, {
+    method: "POST",
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: formData
+  }).then(async (res) => {
+    if (!res.ok) {
+      const data = (await res.json().catch(() => ({}))) as { message?: string };
+      throw new Error(data.message || "Upload failed");
+    }
+    return res.json() as Promise<TaskAttachment>;
+  });
+}
+
+export function deleteAttachment(taskId: number, attachmentId: number): Promise<void> {
+  return apiRequest<void>(`/api/tasks/${taskId}/attachments/${attachmentId}`, {
+    method: "DELETE"
+  });
+}
+
+export function getAttachmentDownloadUrl(taskId: number, attachmentId: number): string {
+  const token = getStoredToken();
+  const base = `${API_BASE_URL}/api/tasks/${taskId}/attachments/${attachmentId}/download`;
+  return token ? `${base}?token=${encodeURIComponent(token)}` : base;
 }
 
 export function getSpaces(): Promise<Space[]> {

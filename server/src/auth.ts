@@ -22,11 +22,16 @@ export function createAuthToken(user: { id: number; email: string }): string {
 function readBearerToken(req: Request): string | null {
   const header = req.headers.authorization;
 
-  if (!header || !header.startsWith("Bearer ")) {
-    return null;
+  if (header && header.startsWith("Bearer ")) {
+    return header.slice("Bearer ".length).trim();
   }
 
-  return header.slice("Bearer ".length).trim();
+  const queryToken = req.query?.token;
+  if (typeof queryToken === "string" && queryToken.length > 0) {
+    return queryToken;
+  }
+
+  return null;
 }
 
 export type AuthedRequest = Request & {

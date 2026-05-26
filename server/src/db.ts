@@ -83,6 +83,41 @@ export type Todo = {
   description: string;
   status: TaskStatus;
   completed: number;
+  dueDate: string | null;
+  createdAt: string;
+};
+
+export type TaskComment = {
+  id: number;
+  taskId: number;
+  userId: number;
+  authorFirstName: string;
+  authorLastName: string;
+  authorEmail: string;
+  content: string;
+  createdAt: string;
+};
+
+export type TaskSubtask = {
+  id: number;
+  taskId: number;
+  title: string;
+  completed: number;
+  position: number;
+  createdAt: string;
+};
+
+export type TaskAttachment = {
+  id: number;
+  taskId: number;
+  fileName: string;
+  originalName: string;
+  mimeType: string;
+  sizeBytes: number;
+  uploadedByUserId: number;
+  uploaderFirstName: string;
+  uploaderLastName: string;
+  uploaderEmail: string;
   createdAt: string;
 };
 
@@ -99,6 +134,7 @@ export type TaskSearchResult = {
   description: string;
   status: TaskStatus;
   completed: number;
+  dueDate: string | null;
   createdAt: string;
 };
 
@@ -331,6 +367,49 @@ if (!todoColumns.some((column) => column.name === "status")) {
 if (!todoColumns.some((column) => column.name === "description")) {
   db.exec("ALTER TABLE todos ADD COLUMN description TEXT NOT NULL DEFAULT ''");
 }
+
+if (!todoColumns.some((column) => column.name === "due_date")) {
+  db.exec("ALTER TABLE todos ADD COLUMN due_date TEXT");
+}
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS task_comments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    task_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    content TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (task_id) REFERENCES todos(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  );
+`);
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS task_subtasks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    task_id INTEGER NOT NULL,
+    title TEXT NOT NULL,
+    completed INTEGER NOT NULL DEFAULT 0,
+    position INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (task_id) REFERENCES todos(id) ON DELETE CASCADE
+  );
+`);
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS task_attachments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    task_id INTEGER NOT NULL,
+    file_name TEXT NOT NULL,
+    original_name TEXT NOT NULL,
+    mime_type TEXT NOT NULL DEFAULT '',
+    size_bytes INTEGER NOT NULL DEFAULT 0,
+    uploaded_by_user_id INTEGER NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (task_id) REFERENCES todos(id) ON DELETE CASCADE,
+    FOREIGN KEY (uploaded_by_user_id) REFERENCES users(id) ON DELETE CASCADE
+  );
+`);
 
 export const userQueries = {
   getByEmail: db.prepare(
@@ -598,7 +677,8 @@ export const todoQueries = {
       t.description,
       t.status,
       t.completed,
-     t.created_at as createdAt
+      t.due_date as dueDate,
+      t.created_at as createdAt
      FROM todos t
      LEFT JOIN users assignee ON assignee.id = t.assignee_user_id
      WHERE t.space_id = ?
@@ -621,6 +701,7 @@ export const todoQueries = {
       t.description,
       t.status,
       t.completed,
+      t.due_date as dueDate,
       t.created_at as createdAt
      FROM todos t
      LEFT JOIN users assignee ON assignee.id = t.assignee_user_id
@@ -648,8 +729,16 @@ export const todoQueries = {
      SET assignee_user_id = ?
      WHERE id = ? AND space_id = ?`
   ),
+  updateDueDate: db.prepare(
+    `UPDATE todos
+     SET due_date = ?
+     WHERE id = ? AND space_id = ?`
+  ),
   remove: db.prepare(`DELETE FROM todos WHERE id = ? AND space_id = ?`),
   removeById: db.prepare(`DELETE FROM todos WHERE id = ?`),
+  updateDueDateById: db.prepare(
+    `UPDATE todos SET due_date = ? WHERE id = ?`
+  ),
   getTaskByIdAdmin: db.prepare(
     `SELECT
       t.id,
@@ -665,6 +754,7 @@ export const todoQueries = {
       t.description,
       t.status,
       t.completed,
+      t.due_date as dueDate,
       t.created_at as createdAt
      FROM todos t
      LEFT JOIN spaces s ON s.id = t.space_id
@@ -687,6 +777,7 @@ export const todoQueries = {
       t.description,
       t.status,
       t.completed,
+      t.due_date as dueDate,
       t.created_at as createdAt
      FROM todos t
      LEFT JOIN spaces s ON s.id = t.space_id
@@ -708,6 +799,7 @@ export const todoQueries = {
       t.description,
       t.status,
       t.completed,
+      t.due_date as dueDate,
       t.created_at as createdAt
      FROM todos t
      JOIN spaces s ON s.id = t.space_id
@@ -731,6 +823,7 @@ export const todoQueries = {
       t.description,
       t.status,
       t.completed,
+      t.due_date as dueDate,
       t.created_at as createdAt
      FROM todos t
      JOIN spaces s ON s.id = t.space_id
@@ -756,6 +849,7 @@ export const todoQueries = {
       t.description,
       t.status,
       t.completed,
+      t.due_date as dueDate,
       t.created_at as createdAt
      FROM todos t
      JOIN spaces s ON s.id = t.space_id
@@ -771,6 +865,91 @@ export const todoQueries = {
      WHERE sm.user_id = ?
        AND (? IS NULL OR t.space_id = ?)
        AND (? = '' OR t.title LIKE ?)`
+  )
+};
+
+export const commentQueries = {
+  getByTaskId: db.prepare(
+    `SELECT
+      c.id,
+      c.task_id as taskId,
+      c.user_id as userId,
+      COALESCE(u.first_name, '') as authorFirstName,
+      COALESCE(u.last_name, '') as authorLastName,
+      u.email as authorEmail,
+      c.content,
+      c.created_at as createdAt
+     FROM task_comments c
+     JOIN users u ON u.id = c.user_id
+     WHERE c.task_id = ?
+     ORDER BY c.id ASC`
+  ),
+  create: db.prepare(
+    `INSERT INTO task_comments (task_id, user_id, content) VALUES (?, ?, ?)`
+  ),
+  deleteById: db.prepare(
+    `DELETE FROM task_comments WHERE id = ? AND user_id = ?`
+  ),
+  getById: db.prepare(
+    `SELECT id, task_id as taskId, user_id as userId FROM task_comments WHERE id = ?`
+  )
+};
+
+export const subtaskQueries = {
+  getByTaskId: db.prepare(
+    `SELECT id, task_id as taskId, title, completed, position, created_at as createdAt
+     FROM task_subtasks
+     WHERE task_id = ?
+     ORDER BY position ASC, id ASC`
+  ),
+  create: db.prepare(
+    `INSERT INTO task_subtasks (task_id, title, position)
+     VALUES (?, ?, (SELECT COALESCE(MAX(position), 0) + 1 FROM task_subtasks WHERE task_id = ?))`
+  ),
+  updateCompleted: db.prepare(
+    `UPDATE task_subtasks SET completed = ? WHERE id = ? AND task_id = ?`
+  ),
+  updateTitle: db.prepare(
+    `UPDATE task_subtasks SET title = ? WHERE id = ? AND task_id = ?`
+  ),
+  deleteById: db.prepare(
+    `DELETE FROM task_subtasks WHERE id = ? AND task_id = ?`
+  ),
+  getById: db.prepare(
+    `SELECT id, task_id as taskId FROM task_subtasks WHERE id = ?`
+  )
+};
+
+export const attachmentQueries = {
+  getByTaskId: db.prepare(
+    `SELECT
+      a.id,
+      a.task_id as taskId,
+      a.file_name as fileName,
+      a.original_name as originalName,
+      a.mime_type as mimeType,
+      a.size_bytes as sizeBytes,
+      a.uploaded_by_user_id as uploadedByUserId,
+      COALESCE(u.first_name, '') as uploaderFirstName,
+      COALESCE(u.last_name, '') as uploaderLastName,
+      u.email as uploaderEmail,
+      a.created_at as createdAt
+     FROM task_attachments a
+     JOIN users u ON u.id = a.uploaded_by_user_id
+     WHERE a.task_id = ?
+     ORDER BY a.id DESC`
+  ),
+  create: db.prepare(
+    `INSERT INTO task_attachments (task_id, file_name, original_name, mime_type, size_bytes, uploaded_by_user_id)
+     VALUES (?, ?, ?, ?, ?, ?)`
+  ),
+  getById: db.prepare(
+    `SELECT id, task_id as taskId, file_name as fileName, original_name as originalName,
+            uploaded_by_user_id as uploadedByUserId
+     FROM task_attachments WHERE id = ?`
+  ),
+  deleteById: db.prepare(
+    `DELETE FROM task_attachments WHERE id = ?`
   )
 };
 

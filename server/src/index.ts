@@ -2,18 +2,29 @@ import bcrypt from "bcryptjs";
 import cors from "cors";
 import express from "express";
 import { createAuthToken, requireAuth, type AuthedRequest } from "./auth.js";
+import multer from "multer";
+import { existsSync, mkdirSync } from "node:fs";
+import { unlink } from "node:fs/promises";
+import { resolve } from "node:path";
+
 import {
   adminQueries,
+  attachmentQueries,
+  commentQueries,
   inviteQueries,
   spaceQueries,
+  subtaskQueries,
   todoQueries,
   type Gender,
   type PreferredTheme,
   type Space,
   type SpaceInvite,
   type SpaceMember,
+  type TaskAttachment,
+  type TaskComment,
   type TaskListResponse,
   type TaskSearchResult,
+  type TaskSubtask,
   type Todo,
   type UserLookupResult,
   userQueries,
@@ -23,6 +34,13 @@ import {
 
 const app = express();
 const port = Number(process.env.PORT || 4000);
+
+const UPLOADS_DIR = resolve(process.cwd(), "data/attachments");
+mkdirSync(UPLOADS_DIR, { recursive: true });
+const upload = multer({
+  dest: UPLOADS_DIR,
+  limits: { fileSize: 20 * 1024 * 1024 },
+});
 
 app.use(cors());
 app.use(express.json());
@@ -477,6 +495,13 @@ app.patch("/api/tasks/:taskId", requireAuth, (req, res) => {
       return;
     }
     todoQueries.updateAssignee.run(assigneeUserId, taskId, currentTask.spaceId);
+  }
+
+  const { dueDate } = req.body || {};
+  if (dueDate === null || dueDate === "") {
+    todoQueries.updateDueDate.run(null, taskId, currentTask.spaceId);
+  } else if (typeof dueDate === "string") {
+    todoQueries.updateDueDate.run(dueDate, taskId, currentTask.spaceId);
   }
 
   const updatedTask = todoQueries.getTaskByIdForUser.get(
@@ -1329,6 +1354,302 @@ app.post("/api/admin/tasks/bulk", requireAuth, (req, res) => {
   }
 
   res.status(400).json({ message: "Unsupported bulk task action." });
+});
+
+app.get("/api/tasks/:taskId/subtasks", requireAuth, (req, res) => {
+  const authReq = req as AuthedRequest;
+  const taskId = Number(req.params.taskId);
+
+  if (Number.isNaN(taskId)) {
+    res.status(400).json({ message: "Invalid task id." });
+    return;
+  }
+
+  const task = todoQueries.getTaskByIdForUser.get(taskId, authReq.authUser.userId) as TaskSearchResult | undefined;
+  if (!task) {
+    res.status(404).json({ message: "Task not found." });
+    return;
+  }
+
+  const subtasks = subtaskQueries.getByTaskId.all(taskId) as TaskSubtask[];
+  res.json(subtasks);
+});
+
+app.post("/api/tasks/:taskId/subtasks", requireAuth, (req, res) => {
+  const authReq = req as AuthedRequest;
+  const taskId = Number(req.params.taskId);
+  const title = String(req.body?.title || "").trim();
+
+  if (Number.isNaN(taskId)) {
+    res.status(400).json({ message: "Invalid task id." });
+    return;
+  }
+
+  if (!title) {
+    res.status(400).json({ message: "Title is required." });
+    return;
+  }
+
+  const task = todoQueries.getTaskByIdForUser.get(taskId, authReq.authUser.userId) as TaskSearchResult | undefined;
+  if (!task) {
+    res.status(404).json({ message: "Task not found." });
+    return;
+  }
+
+  const role = requireSpaceMember(task.spaceId, authReq.authUser.userId);
+  if (!role) {
+    res.status(403).json({ message: "Not a member of this space." });
+    return;
+  }
+
+  subtaskQueries.create.run(taskId, title, taskId);
+  const subtasks = subtaskQueries.getByTaskId.all(taskId) as TaskSubtask[];
+  res.status(201).json(subtasks[subtasks.length - 1]);
+});
+
+app.patch("/api/tasks/:taskId/subtasks/:subtaskId", requireAuth, (req, res) => {
+  const authReq = req as AuthedRequest;
+  const taskId = Number(req.params.taskId);
+  const subtaskId = Number(req.params.subtaskId);
+  const { completed, title } = req.body || {};
+
+  if (Number.isNaN(taskId) || Number.isNaN(subtaskId)) {
+    res.status(400).json({ message: "Invalid id." });
+    return;
+  }
+
+  const task = todoQueries.getTaskByIdForUser.get(taskId, authReq.authUser.userId) as TaskSearchResult | undefined;
+  if (!task) {
+    res.status(404).json({ message: "Task not found." });
+    return;
+  }
+
+  if (typeof completed === "boolean") {
+    subtaskQueries.updateCompleted.run(completed ? 1 : 0, subtaskId, taskId);
+  }
+  if (typeof title === "string") {
+    const clean = title.trim();
+    if (!clean) {
+      res.status(400).json({ message: "Title cannot be empty." });
+      return;
+    }
+    subtaskQueries.updateTitle.run(clean, subtaskId, taskId);
+  }
+
+  const subtask = subtaskQueries.getById.get(subtaskId) as TaskSubtask | undefined;
+  res.json(subtask);
+});
+
+app.delete("/api/tasks/:taskId/subtasks/:subtaskId", requireAuth, (req, res) => {
+  const authReq = req as AuthedRequest;
+  const taskId = Number(req.params.taskId);
+  const subtaskId = Number(req.params.subtaskId);
+
+  if (Number.isNaN(taskId) || Number.isNaN(subtaskId)) {
+    res.status(400).json({ message: "Invalid id." });
+    return;
+  }
+
+  const task = todoQueries.getTaskByIdForUser.get(taskId, authReq.authUser.userId) as TaskSearchResult | undefined;
+  if (!task) {
+    res.status(404).json({ message: "Task not found." });
+    return;
+  }
+
+  subtaskQueries.deleteById.run(subtaskId, taskId);
+  res.status(204).send();
+});
+
+app.get("/api/tasks/:taskId/comments", requireAuth, (req, res) => {
+  const authReq = req as AuthedRequest;
+  const taskId = Number(req.params.taskId);
+
+  if (Number.isNaN(taskId)) {
+    res.status(400).json({ message: "Invalid task id." });
+    return;
+  }
+
+  const task = todoQueries.getTaskByIdForUser.get(taskId, authReq.authUser.userId) as TaskSearchResult | undefined;
+  if (!task) {
+    res.status(404).json({ message: "Task not found." });
+    return;
+  }
+
+  const comments = commentQueries.getByTaskId.all(taskId) as TaskComment[];
+  res.json(comments);
+});
+
+app.post("/api/tasks/:taskId/comments", requireAuth, (req, res) => {
+  const authReq = req as AuthedRequest;
+  const taskId = Number(req.params.taskId);
+  const content = String(req.body?.content || "").trim();
+
+  if (Number.isNaN(taskId)) {
+    res.status(400).json({ message: "Invalid task id." });
+    return;
+  }
+
+  if (!content) {
+    res.status(400).json({ message: "Content is required." });
+    return;
+  }
+
+  const task = todoQueries.getTaskByIdForUser.get(taskId, authReq.authUser.userId) as TaskSearchResult | undefined;
+  if (!task) {
+    res.status(404).json({ message: "Task not found." });
+    return;
+  }
+
+  const result = commentQueries.create.run(taskId, authReq.authUser.userId, content);
+  const comment = commentQueries.getByTaskId.all(taskId).find(
+    (c) => (c as TaskComment).id === Number(result.lastInsertRowid)
+  ) as TaskComment | undefined;
+  res.status(201).json(comment);
+});
+
+app.delete("/api/tasks/:taskId/comments/:commentId", requireAuth, (req, res) => {
+  const authReq = req as AuthedRequest;
+  const taskId = Number(req.params.taskId);
+  const commentId = Number(req.params.commentId);
+
+  if (Number.isNaN(taskId) || Number.isNaN(commentId)) {
+    res.status(400).json({ message: "Invalid id." });
+    return;
+  }
+
+  const task = todoQueries.getTaskByIdForUser.get(taskId, authReq.authUser.userId) as TaskSearchResult | undefined;
+  if (!task) {
+    res.status(404).json({ message: "Task not found." });
+    return;
+  }
+
+  commentQueries.deleteById.run(commentId, authReq.authUser.userId);
+  res.status(204).send();
+});
+
+app.get("/api/tasks/:taskId/attachments", requireAuth, (req, res) => {
+  const authReq = req as AuthedRequest;
+  const taskId = Number(req.params.taskId);
+
+  if (Number.isNaN(taskId)) {
+    res.status(400).json({ message: "Invalid task id." });
+    return;
+  }
+
+  const task = todoQueries.getTaskByIdForUser.get(taskId, authReq.authUser.userId) as TaskSearchResult | undefined;
+  if (!task) {
+    res.status(404).json({ message: "Task not found." });
+    return;
+  }
+
+  const attachments = attachmentQueries.getByTaskId.all(taskId) as TaskAttachment[];
+  res.json(attachments);
+});
+
+app.post("/api/tasks/:taskId/attachments", requireAuth, upload.single("file"), (req, res) => {
+  const authReq = req as AuthedRequest;
+  const multerReq = req as express.Request & { file?: Express.Multer.File };
+  const taskId = Number(req.params.taskId);
+
+  if (Number.isNaN(taskId)) {
+    res.status(400).json({ message: "Invalid task id." });
+    return;
+  }
+
+  if (!multerReq.file) {
+    res.status(400).json({ message: "No file uploaded." });
+    return;
+  }
+
+  const task = todoQueries.getTaskByIdForUser.get(taskId, authReq.authUser.userId) as TaskSearchResult | undefined;
+  if (!task) {
+    res.status(404).json({ message: "Task not found." });
+    return;
+  }
+
+  const role = requireSpaceMember(task.spaceId, authReq.authUser.userId);
+  if (!role) {
+    res.status(403).json({ message: "Not a member of this space." });
+    return;
+  }
+
+  const result = attachmentQueries.create.run(
+    taskId,
+    multerReq.file!.filename,
+    multerReq.file!.originalname,
+    multerReq.file!.mimetype,
+    multerReq.file!.size,
+    authReq.authUser.userId
+  );
+
+  const attachment = attachmentQueries.getByTaskId.all(taskId).find(
+    (a) => (a as TaskAttachment).id === Number(result.lastInsertRowid)
+  ) as TaskAttachment | undefined;
+  res.status(201).json(attachment);
+});
+
+app.get("/api/tasks/:taskId/attachments/:attachmentId/download", requireAuth, (req, res) => {
+  const authReq = req as AuthedRequest;
+  const taskId = Number(req.params.taskId);
+  const attachmentId = Number(req.params.attachmentId);
+
+  if (Number.isNaN(taskId) || Number.isNaN(attachmentId)) {
+    res.status(400).json({ message: "Invalid id." });
+    return;
+  }
+
+  const task = todoQueries.getTaskByIdForUser.get(taskId, authReq.authUser.userId) as TaskSearchResult | undefined;
+  if (!task) {
+    res.status(404).json({ message: "Task not found." });
+    return;
+  }
+
+  const attachment = attachmentQueries.getById.get(attachmentId) as
+    | { id: number; taskId: number; fileName: string; originalName: string; uploadedByUserId: number }
+    | undefined;
+
+  if (!attachment || attachment.taskId !== taskId) {
+    res.status(404).json({ message: "Attachment not found." });
+    return;
+  }
+
+  const filePath = resolve(UPLOADS_DIR, attachment.fileName);
+  res.download(filePath, attachment.originalName);
+});
+
+app.delete("/api/tasks/:taskId/attachments/:attachmentId", requireAuth, async (req, res) => {
+  const authReq = req as AuthedRequest;
+  const taskId = Number(req.params.taskId);
+  const attachmentId = Number(req.params.attachmentId);
+
+  if (Number.isNaN(taskId) || Number.isNaN(attachmentId)) {
+    res.status(400).json({ message: "Invalid id." });
+    return;
+  }
+
+  const task = todoQueries.getTaskByIdForUser.get(taskId, authReq.authUser.userId) as TaskSearchResult | undefined;
+  if (!task) {
+    res.status(404).json({ message: "Task not found." });
+    return;
+  }
+
+  const attachment = attachmentQueries.getById.get(attachmentId) as
+    | { id: number; taskId: number; fileName: string; originalName: string; uploadedByUserId: number }
+    | undefined;
+
+  if (!attachment || attachment.taskId !== taskId) {
+    res.status(404).json({ message: "Attachment not found." });
+    return;
+  }
+
+  const filePath = resolve(UPLOADS_DIR, attachment.fileName);
+  attachmentQueries.deleteById.run(attachmentId);
+
+  if (existsSync(filePath)) {
+    await unlink(filePath).catch(() => {});
+  }
+
+  res.status(204).send();
 });
 
 app.listen(port, () => {
