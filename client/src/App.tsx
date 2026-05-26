@@ -3914,6 +3914,7 @@ function App() {
                   </Card>
                   <Card
                     withBorder
+                    data-test-id="tasks-stat-completed"
                     className={`surface-card tasks-stat-card tasks-stat-filter-card${
                       tasksStatusFilter === "done" ? " tasks-stat-filter-card-active" : ""
                     }`}
@@ -3927,7 +3928,7 @@ function App() {
                     }}
                   >
                     <Text className="tasks-stat-label">Completed</Text>
-                    <Text className="tasks-stat-value tasks-stat-value-success">{taskStats.completed}</Text>
+                    <Text data-test-id="tasks-stat-completed-value" className="tasks-stat-value tasks-stat-value-success">{taskStats.completed}</Text>
                   </Card>
                   <Card
                     withBorder

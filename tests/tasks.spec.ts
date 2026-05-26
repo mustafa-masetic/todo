@@ -105,6 +105,7 @@ test.describe("Tasks", () => {
     await taskDetail.saveChanges();
     await taskDetail.expectTaskUpdatedToast();
     await page.goBack();
+    await taskDetail.expectTaskVisible(doneTitle);
 
     await taskDetail.openTaskByTitle(doneTitle);
     await taskDetail.enterEditMode();
@@ -112,10 +113,13 @@ test.describe("Tasks", () => {
     await taskDetail.saveChanges();
     await taskDetail.expectTaskUpdatedToast();
     await page.goBack();
+    await taskDetail.expectTaskVisible(doneTitle);
 
     await nav.goToTasks();
 
-    await page.getByText("Completed", { exact: true }).first().click();
+    await expect(page.getByTestId("tasks-stat-completed-value")).toHaveText("1", { timeout: 15000 });
+
+    await page.getByTestId("tasks-stat-completed").click();
     await expect(page.getByTestId("tasks-status-filter")).toHaveValue("Done");
     await expect(page.getByText(doneTitle, { exact: true })).toBeVisible();
     await expect(page.getByText(createdTitle, { exact: true })).toHaveCount(0);
