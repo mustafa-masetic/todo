@@ -317,6 +317,7 @@ async function main() {
   // Seed due dates, subtasks, and comments for a realistic subset
   let subtasksSeeded = 0;
   let commentsSeeded = 0;
+  let seedErrors = 0;
 
   for (let i = 0; i < createdTaskIds.length; i++) {
     const { fixtureTask, createdId, creatorAuth } = createdTaskIds[i];
@@ -324,11 +325,16 @@ async function main() {
     // Due date: ~70% of tasks
     if (i % 10 !== 7 && i % 10 !== 4) {
       const dueDate = dueDates[i % dueDates.length];
-      await request(`/api/tasks/${createdId}`, {
-        method: 'PATCH',
-        headers: authHeaders(creatorAuth.token),
-        body: JSON.stringify({ dueDate })
-      });
+      try {
+        await request(`/api/tasks/${createdId}`, {
+          method: 'PATCH',
+          headers: authHeaders(creatorAuth.token),
+          body: JSON.stringify({ dueDate })
+        });
+      } catch (e) {
+        console.warn(`  [task ${createdId}] dueDate failed: ${e.message}`);
+        seedErrors += 1;
+      }
     }
 
     // Subtasks: every task gets subtasks
@@ -338,34 +344,47 @@ async function main() {
     const createdSubtaskIds = [];
 
     for (const title of subtasksToAdd) {
-      const st = await request(`/api/tasks/${createdId}/subtasks`, {
-        method: 'POST',
-        headers: authHeaders(creatorAuth.token),
-        body: JSON.stringify({ title })
-      });
-      createdSubtaskIds.push(st.id);
-      subtasksSeeded += 1;
+      try {
+        const st = await request(`/api/tasks/${createdId}/subtasks`, {
+          method: 'POST',
+          headers: authHeaders(creatorAuth.token),
+          body: JSON.stringify({ title })
+        });
+        createdSubtaskIds.push(st.id);
+        subtasksSeeded += 1;
+      } catch (e) {
+        console.warn(`  [task ${createdId}] subtask "${title}" failed: ${e.message}`);
+        seedErrors += 1;
+      }
     }
 
     // Mark some subtasks completed based on task status
     if (fixtureTask.status === 'done') {
-      // all done
       for (const stId of createdSubtaskIds) {
-        await request(`/api/tasks/${createdId}/subtasks/${stId}`, {
-          method: 'PATCH',
-          headers: authHeaders(creatorAuth.token),
-          body: JSON.stringify({ completed: true })
-        });
+        try {
+          await request(`/api/tasks/${createdId}/subtasks/${stId}`, {
+            method: 'PATCH',
+            headers: authHeaders(creatorAuth.token),
+            body: JSON.stringify({ completed: true })
+          });
+        } catch (e) {
+          console.warn(`  [task ${createdId}] subtask ${stId} complete failed: ${e.message}`);
+          seedErrors += 1;
+        }
       }
     } else if (fixtureTask.status === 'in_progress') {
-      // first half done
       const half = Math.ceil(createdSubtaskIds.length / 2);
       for (const stId of createdSubtaskIds.slice(0, half)) {
-        await request(`/api/tasks/${createdId}/subtasks/${stId}`, {
-          method: 'PATCH',
-          headers: authHeaders(creatorAuth.token),
-          body: JSON.stringify({ completed: true })
-        });
+        try {
+          await request(`/api/tasks/${createdId}/subtasks/${stId}`, {
+            method: 'PATCH',
+            headers: authHeaders(creatorAuth.token),
+            body: JSON.stringify({ completed: true })
+          });
+        } catch (e) {
+          console.warn(`  [task ${createdId}] subtask ${stId} complete failed: ${e.message}`);
+          seedErrors += 1;
+        }
       }
     }
 
@@ -383,18 +402,26 @@ async function main() {
         const authorAuth = authByUserId.get(authorUserId);
         if (!authorAuth) continue;
 
-        await request(`/api/tasks/${createdId}/comments`, {
-          method: 'POST',
-          headers: authHeaders(authorAuth.token),
-          body: JSON.stringify({ content: commentSet[c % commentSet.length] })
-        });
-        commentsSeeded += 1;
+        try {
+          await request(`/api/tasks/${createdId}/comments`, {
+            method: 'POST',
+            headers: authHeaders(authorAuth.token),
+            body: JSON.stringify({ content: commentSet[c % commentSet.length] })
+          });
+          commentsSeeded += 1;
+        } catch (e) {
+          console.warn(`  [task ${createdId}] comment failed: ${e.message}`);
+          seedErrors += 1;
+        }
       }
     }
   }
 
   console.log(`Subtasks seeded: ${subtasksSeeded}`);
   console.log(`Comments seeded: ${commentsSeeded}`);
+  if (seedErrors > 0) {
+    console.warn(`Seed errors (non-fatal): ${seedErrors}`);
+  }
   console.log('Seed completed successfully.');
 }
 
