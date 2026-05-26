@@ -555,7 +555,7 @@ export function TaskDetailPage({ taskId, onBack, currentUserId }: TaskDetailPage
                       leftSection={<IconWriting size={16} />}
                       onClick={handleSave}
                       loading={updateMutation.isPending}
-                      data-testid="task-save-button"
+                      data-test-id="task-save-button"
                     >
                       Save Changes
                     </Button>
@@ -576,7 +576,7 @@ export function TaskDetailPage({ taskId, onBack, currentUserId }: TaskDetailPage
                       className="add-button"
                       leftSection={<IconEdit size={16} />}
                       onClick={() => startEditing(task)}
-                      data-testid="task-edit-button"
+                      data-test-id="task-edit-button"
                     >
                       Edit Task
                     </Button>
@@ -586,7 +586,7 @@ export function TaskDetailPage({ taskId, onBack, currentUserId }: TaskDetailPage
                       color="red"
                       leftSection={<IconTrash size={16} />}
                       onClick={() => setDeleteConfirmOpen(true)}
-                      data-testid="task-delete-button"
+                      data-test-id="task-delete-button"
                     >
                       Delete Task
                     </Button>
@@ -614,7 +614,7 @@ export function TaskDetailPage({ taskId, onBack, currentUserId }: TaskDetailPage
                           { value: "done", label: "Done" },
                         ]}
                         size="sm"
-                        data-testid="task-status-select"
+                        data-test-id="task-status-select"
                       />
                     ) : (
                       <Badge
@@ -699,7 +699,7 @@ export function TaskDetailPage({ taskId, onBack, currentUserId }: TaskDetailPage
             color="red"
             loading={deleteMutation.isPending}
             onClick={() => deleteMutation.mutate(task)}
-            data-testid="delete-task-confirm-button"
+            data-test-id="delete-task-confirm-button"
           >
             Delete
           </Button>
