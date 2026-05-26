@@ -1,61 +1,33 @@
 import { randomUUID } from "node:crypto";
-import { expect, test } from "./fixtures/auth-session";
+import { expect, test } from "@playwright/test";
 import { AdminPage } from "./pom/admin.page";
 import { AuthPage } from "./pom/auth.page";
 import { NavigationComponent } from "./pom/navigation.component";
 import { SpacesPage } from "./pom/spaces.page";
-import { deleteUserAsAdmin } from "./utils/admin-cleanup";
 import { ensurePageLoaded } from "./utils/page";
 
 const adminEmail = process.env.E2E_EMAIL;
 const adminPassword = process.env.E2E_PASSWORD;
-const suiteEmail = "playwright.invites.owner@example.com";
 
-async function registerInvitee(
-  browser: import("@playwright/test").Browser,
-  baseURL: string | undefined,
-  unique: string
-) {
+async function createInvitee(browser: import("@playwright/test").Browser, baseURL: string | undefined, unique: string) {
   const email = `playwright.invitee.${unique}@example.com`;
-  const password = "TestPass123!";
-  const context = await browser.newContext({
-    baseURL: baseURL ?? undefined,
-    storageState: { cookies: [], origins: [] }
-  });
+  const context = await browser.newContext({ baseURL: baseURL ?? undefined, storageState: { cookies: [], origins: [] }, viewport: { width: 1280, height: 720 } });
   const page = await context.newPage();
-  const authPage = new AuthPage(page);
-
-  await authPage.gotoRegister();
-  await authPage.register({
-    email,
-    firstName: "Invitee",
-    lastName: unique.slice(0, 8),
-    gender: "Other",
-    password
-  });
-
+  await new AuthPage(page).register({ firstName: "Invitee", lastName: unique.slice(0, 8), email, password: "TestPass123!" });
   return { context, page, email };
 }
 
 test.describe("Invites", () => {
-  test.use({
-    authSession: {
-      mode: "register",
-      email: suiteEmail,
-      firstName: "Invite",
-      lastName: "Owner",
-      gender: "Other",
-      password: "TestPass123!"
-    }
-  });
-
   test("accepts an invitation from the review modal", async ({ page, browser, baseURL }) => {
     const adminPage = new AdminPage(page);
     const nav = new NavigationComponent(page);
     const spacesPage = new SpacesPage(page);
     const unique = randomUUID();
+    const ownerEmail = `playwright.invites.owner.${unique}@example.com`;
     const spaceName = `PW Invite Accept ${unique}`;
-    const invitee = await registerInvitee(browser, baseURL, `${unique}-accept`);
+
+    await new AuthPage(page).register({ firstName: "Invite", lastName: "Owner", email: ownerEmail, password: "TestPass123!" });
+    const invitee = await createInvitee(browser, baseURL, `${unique}-accept`);
 
     await ensurePageLoaded(page);
     await nav.themeToggle().waitFor({ state: "visible" });
@@ -105,8 +77,11 @@ test.describe("Invites", () => {
     const nav = new NavigationComponent(page);
     const spacesPage = new SpacesPage(page);
     const unique = randomUUID();
+    const ownerEmail = `playwright.invites.owner.${unique}@example.com`;
     const spaceName = `PW Invite Decline ${unique}`;
-    const invitee = await registerInvitee(browser, baseURL, `${unique}-decline`);
+
+    await new AuthPage(page).register({ firstName: "Invite", lastName: "Owner", email: ownerEmail, password: "TestPass123!" });
+    const invitee = await createInvitee(browser, baseURL, `${unique}-decline`);
 
     await ensurePageLoaded(page);
     await nav.themeToggle().waitFor({ state: "visible" });
@@ -153,7 +128,4 @@ test.describe("Invites", () => {
     }
   });
 
-  test.afterAll(async ({ browser, baseURL }) => {
-    await deleteUserAsAdmin(browser, baseURL, suiteEmail);
-  });
 });

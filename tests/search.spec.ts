@@ -1,27 +1,18 @@
-import { expect, test } from "./fixtures/auth-session";
+import { expect, test } from "@playwright/test";
+import { AuthPage } from "./pom/auth.page";
 import { NavigationComponent } from "./pom/navigation.component";
-import { deleteUserAsAdmin } from "./utils/admin-cleanup";
 import { ensurePageLoaded } from "./utils/page";
 
-const suiteEmail = "playwright.search@example.com";
-
 test.describe("Search", () => {
-  test.use({
-    authSession: {
-      mode: "register",
-      email: suiteEmail,
-      firstName: "Search",
-      lastName: "Tester",
-      gender: "Other",
-      password: "TestPass123!"
-    }
-  });
-
   test("opens and closes global search with keyboard shortcuts", async ({ page }) => {
+    const unique = crypto.randomUUID();
+    await new AuthPage(page).register({ firstName: "Search", lastName: "Tester", email: `playwright.search.${unique}@example.com`, password: "TestPass123!" });
+
     const nav = new NavigationComponent(page);
     const globalSearchInput = page.getByTestId("global-search-input");
 
     await ensurePageLoaded(page);
+    await page.getByText("Account created").waitFor({ state: "hidden", timeout: 10_000 }).catch(() => {});
 
     // Ensure the document has focus before sending shortcuts.
     await page.mouse.click(10, 10);
@@ -44,7 +35,4 @@ test.describe("Search", () => {
     await expect(globalSearchInput).toBeHidden();
   });
 
-  test.afterAll(async ({ browser, baseURL }) => {
-    await deleteUserAsAdmin(browser, baseURL, suiteEmail);
-  });
 });

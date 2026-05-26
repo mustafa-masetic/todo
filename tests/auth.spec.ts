@@ -16,7 +16,6 @@ test.describe("Auth", () => {
     const adminEmail = process.env.E2E_EMAIL;
     const adminPassword = process.env.E2E_PASSWORD;
 
-    await authPage.gotoRegister();
     await authPage.register({
       firstName: "Play",
       lastName: "Wright",

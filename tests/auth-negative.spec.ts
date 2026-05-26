@@ -11,7 +11,6 @@ test.describe("Auth Negative", () => {
       has: page.getByText("Invalid credentials.")
     });
 
-    await authPage.gotoLogin();
     await authPage.loginExpectFailure("invalid.user@example.com", "WrongPass123!");
 
     await expect(page).toHaveURL(/\/login$/);
@@ -29,7 +28,6 @@ test.describe("Auth Negative", () => {
     const unique = Date.now();
     const email = `playwright.duplicate.${unique}@example.com`;
 
-    await authPage.gotoRegister();
     await authPage.register({
       firstName: "Duplicate",
       lastName: "Tester",
@@ -42,7 +40,6 @@ test.describe("Auth Negative", () => {
     await nav.logout();
     await expect(page).toHaveURL("/");
 
-    await authPage.gotoRegister();
     await authPage.register(
       {
         firstName: "Duplicate",

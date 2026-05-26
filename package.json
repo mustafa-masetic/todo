@@ -2,7 +2,7 @@
   "name": "todo-app",
   "private": true,
   "version": "1.0.0",
-  "packageManager": "pnpm@10.6.2",
+  "packageManager": "pnpm@11.3.0",
   "scripts": {
     "dev": "concurrently -n client,server -c cyan,green \"pnpm --filter ./client dev\" \"pnpm --filter ./server dev\"",
     "build": "pnpm --filter ./client build && pnpm --filter ./server build",
@@ -23,7 +23,7 @@
     "test:e2e:install": "playwright install --with-deps"
   },
   "devDependencies": {
-    "@playwright/test": "^1.52.0",
+    "@playwright/test": "^1.60.0",
     "concurrently": "^9.1.2"
   },
   "dependencies": {

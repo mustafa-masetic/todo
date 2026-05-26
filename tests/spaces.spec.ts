@@ -1,33 +1,22 @@
 import { randomUUID } from "node:crypto";
-import { expect, test } from "./fixtures/auth-session";
+import { expect, test } from "@playwright/test";
 import { AdminPage } from "./pom/admin.page";
 import { AuthPage } from "./pom/auth.page";
 import { NavigationComponent } from "./pom/navigation.component";
 import { SpacesPage } from "./pom/spaces.page";
-import { deleteUserAsAdmin } from "./utils/admin-cleanup";
 import { ensurePageLoaded } from "./utils/page";
 
 const adminEmail = process.env.E2E_EMAIL;
 const adminPassword = process.env.E2E_PASSWORD;
-const suiteEmail = "playwright.spaces@example.com";
-
 test.describe("Spaces", () => {
-  test.use({
-    authSession: {
-      mode: "register",
-      email: suiteEmail,
-      firstName: "Space",
-      lastName: "Tester",
-      gender: "Other",
-      password: "TestPass123!"
-    }
-  });
-
   test("creates and searches a space", async ({ page }) => {
+    const authPage = new AuthPage(page);
     const nav = new NavigationComponent(page);
     const spacesPage = new SpacesPage(page);
     const unique = randomUUID();
     const spaceName = `PW Space ${unique}`;
+
+    await authPage.register({ firstName: "Space", lastName: "Tester", email: `playwright.spaces.${unique}@example.com`, password: "TestPass123!" });
 
     await ensurePageLoaded(page);
     await nav.themeToggle().waitFor({ state: "visible" });
@@ -45,10 +34,13 @@ test.describe("Spaces", () => {
   });
 
   test("creates and deletes a space", async ({ page }) => {
+    const authPage = new AuthPage(page);
     const nav = new NavigationComponent(page);
     const spacesPage = new SpacesPage(page);
     const unique = randomUUID();
     const spaceName = `PW Space Delete ${unique}`;
+
+    await authPage.register({ firstName: "Space", lastName: "Tester", email: `playwright.spaces.${unique}@example.com`, password: "TestPass123!" });
 
     await ensurePageLoaded(page);
     await nav.themeToggle().waitFor({ state: "visible" });
@@ -71,23 +63,20 @@ test.describe("Spaces", () => {
     const spacesPage = new SpacesPage(page);
     const unique = randomUUID();
     const spaceName = `PW Members Space ${unique}`;
+    const ownerEmail = `playwright.spaces.owner.${unique}@example.com`;
     const invitedUserEmail = `playwright.member.${unique}@example.com`;
     const invitedUserPassword = "TestPass123!";
+
+    await new AuthPage(page).register({ firstName: "Space", lastName: "Tester", email: ownerEmail, password: "TestPass123!" });
+
     const invitedUserContext = await browser.newContext({
       baseURL: baseURL ?? undefined,
-      storageState: { cookies: [], origins: [] }
+      storageState: { cookies: [], origins: [] },
+      viewport: { width: 1280, height: 720 }
     });
     const invitedUserPage = await invitedUserContext.newPage();
-    const invitedUserAuth = new AuthPage(invitedUserPage);
 
-    await invitedUserAuth.gotoRegister();
-    await invitedUserAuth.register({
-      email: invitedUserEmail,
-      firstName: "Invite",
-      lastName: "Member",
-      gender: "Other",
-      password: invitedUserPassword
-    });
+    await new AuthPage(invitedUserPage).register({ firstName: "Invite", lastName: "Member", email: invitedUserEmail, password: invitedUserPassword });
 
     await ensurePageLoaded(page);
     await nav.themeToggle().waitFor({ state: "visible" });
@@ -97,7 +86,7 @@ test.describe("Spaces", () => {
 
     await page.getByRole("tab", { name: /Members \(/ }).click();
     await page.getByPlaceholder("Search members...").fill("Space");
-    await expect(page.getByText("Space Tester", { exact: true })).toBeVisible();
+    await expect(page.getByText("Space Tester", { exact: true }).first()).toBeVisible();
 
     await page.getByPlaceholder("Search members...").fill("");
     await page.getByTestId("space-invite-people-button").click();
@@ -128,7 +117,4 @@ test.describe("Spaces", () => {
     }
   });
 
-  test.afterAll(async ({ browser, baseURL }) => {
-    await deleteUserAsAdmin(browser, baseURL, suiteEmail);
-  });
 });

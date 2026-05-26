@@ -1,9 +1,19 @@
 import { expect, type Page } from "@playwright/test";
 
+const TOKEN_KEY = "todo-flow-auth-token";
+
 export class AuthPage {
   constructor(private readonly page: Page) {}
 
-  private async expectAuthenticatedUi() {
+  private async waitForToken() {
+    await this.page.waitForFunction(
+      (key) => !!localStorage.getItem(key),
+      TOKEN_KEY,
+      { timeout: 15_000 }
+    );
+  }
+
+  async expectAuthenticatedUi() {
     const accountMenuButton = this.page.getByTestId("nav-account-menu-button");
     const mobileMenuToggle = this.page.getByTestId("nav-mobile-menu-toggle");
 
@@ -18,46 +28,13 @@ export class AuthPage {
       .toBeTruthy();
   }
 
-  async gotoLogin() {
+  async login(email: string, password: string) {
     await this.page.goto("/login");
-    await expect(this.page.getByTestId("auth-email-input")).toBeVisible();
-  }
-
-  async gotoRegister() {
-    await this.page.goto("/register");
     await this.page.waitForLoadState("networkidle");
-
-    const firstNameInput = this.page.getByTestId("auth-first-name-input");
-    const accountMenuButton = this.page.getByTestId("nav-account-menu-button");
-
-    if (await accountMenuButton.isVisible().catch(() => false)) {
-      return;
-    }
-
-    if (await firstNameInput.isVisible().catch(() => false)) {
-      return;
-    }
-
-    const registerToggle = this.page
-      .getByTestId("hero-register-button")
-      .or(this.page.getByRole("button", { name: "Register" }))
-      .first();
-
-    if (await registerToggle.isVisible().catch(() => false)) {
-      await registerToggle.click();
-      await expect(firstNameInput).toBeVisible();
-    }
-  }
-
-  async login(
-    email: string,
-    password: string,
-  ) {
-    await this.gotoLogin();
-
     await this.page.getByTestId("auth-email-input").fill(email);
     await this.page.getByTestId("auth-password-input").fill(password);
     await this.page.getByTestId("auth-submit-button").click();
+    await this.waitForToken();
   }
 
   async loginExpectSuccess(email: string, password: string) {
@@ -66,7 +43,11 @@ export class AuthPage {
   }
 
   async loginExpectFailure(email: string, password: string) {
-    await this.login(email, password);
+    await this.page.goto("/login");
+    await this.page.waitForLoadState("networkidle");
+    await this.page.getByTestId("auth-email-input").fill(email);
+    await this.page.getByTestId("auth-password-input").fill(password);
+    await this.page.getByTestId("auth-submit-button").click();
     await expect(
       this.page.getByRole("alert").filter({
         has: this.page.getByText("Invalid credentials.")
@@ -82,39 +63,19 @@ export class AuthPage {
       gender?: "Female" | "Male" | "Other" | "Prefer not to say";
       password: string;
     },
-    options?: {
-      waitForAuthenticatedUi?: boolean;
-    }
+    options: { waitForAuthenticatedUi?: boolean } = {}
   ) {
-    const firstNameInput = this.page.getByTestId("auth-first-name-input");
-    const accountMenuButton = this.page.getByTestId("nav-account-menu-button");
-
-    if (await accountMenuButton.isVisible().catch(() => false)) {
-      return;
-    }
-
-    if (!(await firstNameInput.isVisible().catch(() => false))) {
-      const registerToggle = this.page
-        .getByTestId("hero-register-button")
-        .or(this.page.getByRole("button", { name: "Register" }))
-        .first();
-      await registerToggle.click();
-    }
-
-    await expect(firstNameInput).toBeVisible();
-    await firstNameInput.fill(params.firstName);
+    await this.page.goto("/register");
+    await this.page.waitForLoadState("networkidle");
+    await this.page.getByTestId("auth-first-name-input").fill(params.firstName);
     await this.page.getByTestId("auth-last-name-input").fill(params.lastName);
     await this.page.getByTestId("auth-email-input").fill(params.email);
-
-    const gender = params.gender ?? "Other";
     await this.page.getByTestId("auth-gender-select").click();
-    await this.page.getByRole("option", { name: gender }).click();
-
+    await this.page.getByRole("option", { name: params.gender ?? "Other" }).click();
     await this.page.getByTestId("auth-password-input").fill(params.password);
     await this.page.getByTestId("auth-submit-button").click();
-
-    if (options?.waitForAuthenticatedUi ?? true) {
-      await this.expectAuthenticatedUi();
+    if (options.waitForAuthenticatedUi !== false) {
+      await this.page.getByTestId("nav-account-menu-button").waitFor({ state: "visible", timeout: 15_000 });
     }
   }
 }

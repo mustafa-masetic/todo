@@ -1,30 +1,19 @@
 import { randomUUID } from "node:crypto";
-import { expect, test } from "./fixtures/auth-session";
+import { expect, test } from "@playwright/test";
+import { AuthPage } from "./pom/auth.page";
 import { NavigationComponent } from "./pom/navigation.component";
 import { SpacesPage } from "./pom/spaces.page";
 import { TaskDetailPage } from "./pom/task-detail.page";
-import { deleteUserAsAdmin } from "./utils/admin-cleanup";
 import { ensurePageLoaded } from "./utils/page";
 
-const suiteEmail = "playwright.tasks@example.com";
-
 test.describe("Tasks", () => {
-  test.use({
-    authSession: {
-      mode: "register",
-      email: suiteEmail,
-      firstName: "Task",
-      lastName: "Tester",
-      gender: "Other",
-      password: "TestPass123!"
-    }
-  });
-
   test("creates a task and updates its status", async ({ page }) => {
+    const unique = randomUUID();
+    await new AuthPage(page).register({ firstName: "Task", lastName: "Tester", email: `playwright.tasks.${unique}@example.com`, password: "TestPass123!" });
+
     const nav = new NavigationComponent(page);
     const spacesPage = new SpacesPage(page);
     const taskDetail = new TaskDetailPage(page);
-    const unique = randomUUID();
     const spaceName = `PW Task Space ${unique}`;
     const taskTitle = `PW Task ${unique}`;
 
@@ -52,10 +41,12 @@ test.describe("Tasks", () => {
   });
 
   test("creates and deletes a task", async ({ page }) => {
+    const unique = randomUUID();
+    await new AuthPage(page).register({ firstName: "Task", lastName: "Tester", email: `playwright.tasks.${unique}@example.com`, password: "TestPass123!" });
+
     const nav = new NavigationComponent(page);
     const spacesPage = new SpacesPage(page);
     const taskDetail = new TaskDetailPage(page);
-    const unique = randomUUID();
     const spaceName = `PW Task Delete Space ${unique}`;
     const taskTitle = `PW Task Delete ${unique}`;
 
@@ -77,10 +68,12 @@ test.describe("Tasks", () => {
   });
 
   test("task dashboard stat tiles sync with status filter and table", async ({ page }) => {
+    const unique = randomUUID();
+    await new AuthPage(page).register({ firstName: "Task", lastName: "Tester", email: `playwright.tasks.${unique}@example.com`, password: "TestPass123!" });
+
     const nav = new NavigationComponent(page);
     const spacesPage = new SpacesPage(page);
     const taskDetail = new TaskDetailPage(page);
-    const unique = randomUUID();
     const spaceName = `PW Dashboard Space ${unique}`;
     const createdTitle = `PW Created ${unique}`;
     const inProgressTitle = `PW Progress ${unique}`;
@@ -137,7 +130,4 @@ test.describe("Tasks", () => {
     await spacesPage.expectSpaceDeletedToast();
   });
 
-  test.afterAll(async ({ browser, baseURL }) => {
-    await deleteUserAsAdmin(browser, baseURL, suiteEmail);
-  });
 });
