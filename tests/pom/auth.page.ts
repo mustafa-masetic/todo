@@ -31,6 +31,7 @@ export class AuthPage {
   async login(email: string, password: string) {
     await this.page.goto("/login");
     await this.page.waitForLoadState("networkidle");
+    await this.page.getByTestId("auth-email-input").waitFor({ state: "visible" });
     await this.page.getByTestId("auth-email-input").fill(email);
     await this.page.getByTestId("auth-password-input").fill(password);
     await this.page.getByTestId("auth-submit-button").click();
