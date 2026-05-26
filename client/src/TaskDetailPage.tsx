@@ -280,11 +280,17 @@ export function TaskDetailPage({ taskId, onBack, currentUserId }: TaskDetailPage
                 <Text fw={600} size="sm" c="var(--app-title)">Description</Text>
                 {isEditing ? (
                   <Textarea
-                    className="todo-input"
                     value={editDescription}
                     onChange={(e) => setEditDescription(e.currentTarget.value)}
                     minRows={5}
                     autosize
+                    styles={{
+                      input: {
+                        background: "color-mix(in srgb, var(--app-surface) 88%, black 12%)",
+                        borderColor: "var(--app-border)",
+                        color: "var(--app-text)",
+                      },
+                    }}
                   />
                 ) : (
                   <Text size="sm" c="var(--app-text)" style={{ whiteSpace: "pre-wrap", lineHeight: 1.6 }}>
@@ -490,11 +496,17 @@ export function TaskDetailPage({ taskId, onBack, currentUserId }: TaskDetailPage
                   <Avatar size="sm" radius="xl" color="violet" variant="light">U</Avatar>
                   <Stack gap="xs" style={{ flex: 1 }}>
                     <Textarea
-                      className="todo-input"
                       placeholder="Add a comment…"
                       value={newComment}
                       onChange={(e) => setNewComment(e.currentTarget.value)}
                       minRows={2}
+                      styles={{
+                        input: {
+                          background: "color-mix(in srgb, var(--app-surface) 88%, black 12%)",
+                          borderColor: "var(--app-border)",
+                          color: "var(--app-text)",
+                        },
+                      }}
                     />
                     <Group justify="flex-end">
                       <Button

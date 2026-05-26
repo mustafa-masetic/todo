@@ -259,7 +259,31 @@ async function main() {
 
   console.log('Membership invites processed');
 
+  const subtaskTemplates = [
+    ["Research available tools and options", "Set up initial configuration", "Write unit tests", "Update documentation", "Review with team"],
+    ["Define acceptance criteria", "Implement core logic", "Add error handling", "Run integration tests", "Deploy to staging"],
+    ["Audit existing approach", "Identify gaps and risks", "Propose improvements", "Get stakeholder sign-off", "Execute changes"],
+    ["Map current state", "Draft revised process", "Validate with affected teams", "Roll out incrementally", "Measure outcomes"],
+    ["Spike and prototype", "Align on architecture", "Implement MVP", "Load test under realistic conditions", "Document findings"],
+  ];
+
+  const commentTemplates = [
+    ["Started investigation — initial findings look promising.", "Blocked on access to staging environment, following up with infra.", "Unblocked. Resuming work now."],
+    ["This is more complex than estimated. May need an extra day.", "Pair-programmed with Lena today — good progress on the core logic."],
+    ["Draft ready for review. Leaving comments in the PR.", "Merged. Monitoring for regressions."],
+    ["Found an edge case we hadn't considered — updating the spec.", "Edge case handled. Ready for QA."],
+    ["Dependency on the API contract task — waiting for that to close first.", "Dependency resolved. Picking this up now."],
+    ["Quick update: scope was trimmed after sync with product. Adjusted.", "All done. Closing this out."],
+  ];
+
+  const dueDates = [
+    "2026-03-15", "2026-03-22", "2026-04-01", "2026-04-10", "2026-04-20",
+    "2026-05-01", "2026-05-15", "2026-06-01", "2026-06-15", "2026-07-01",
+  ];
+
   let createdTasks = 0;
+  const createdTaskIds = [];
+
   for (const task of tasks) {
     const createdSpaceId = spaceIdByFixtureId.get(task.spaceId);
     if (!createdSpaceId) {
@@ -273,7 +297,7 @@ async function main() {
 
     const assigneeAuth = task.assigneeUserId ? authByUserId.get(task.assigneeUserId) : null;
 
-    await request(`/api/spaces/${createdSpaceId}/todos`, {
+    const created = await request(`/api/spaces/${createdSpaceId}/todos`, {
       method: 'POST',
       headers: authHeaders(creatorAuth.token),
       body: JSON.stringify({
@@ -284,10 +308,93 @@ async function main() {
       })
     });
 
+    createdTaskIds.push({ fixtureTask: task, createdId: created.id, creatorAuth });
     createdTasks += 1;
   }
 
   console.log(`Tasks created: ${createdTasks}`);
+
+  // Seed due dates, subtasks, and comments for a realistic subset
+  let subtasksSeeded = 0;
+  let commentsSeeded = 0;
+
+  for (let i = 0; i < createdTaskIds.length; i++) {
+    const { fixtureTask, createdId, creatorAuth } = createdTaskIds[i];
+
+    // Due date: ~70% of tasks
+    if (i % 10 !== 7 && i % 10 !== 4) {
+      const dueDate = dueDates[i % dueDates.length];
+      await request(`/api/tasks/${createdId}`, {
+        method: 'PATCH',
+        headers: authHeaders(creatorAuth.token),
+        body: JSON.stringify({ dueDate })
+      });
+    }
+
+    // Subtasks: every task gets subtasks
+    const subtaskSet = subtaskTemplates[i % subtaskTemplates.length];
+    const subtaskCount = 2 + (i % 4); // 2–5 subtasks
+    const subtasksToAdd = subtaskSet.slice(0, subtaskCount);
+    const createdSubtaskIds = [];
+
+    for (const title of subtasksToAdd) {
+      const st = await request(`/api/tasks/${createdId}/subtasks`, {
+        method: 'POST',
+        headers: authHeaders(creatorAuth.token),
+        body: JSON.stringify({ title })
+      });
+      createdSubtaskIds.push(st.id);
+      subtasksSeeded += 1;
+    }
+
+    // Mark some subtasks completed based on task status
+    if (fixtureTask.status === 'done') {
+      // all done
+      for (const stId of createdSubtaskIds) {
+        await request(`/api/tasks/${createdId}/subtasks/${stId}`, {
+          method: 'PATCH',
+          headers: authHeaders(creatorAuth.token),
+          body: JSON.stringify({ completed: true })
+        });
+      }
+    } else if (fixtureTask.status === 'in_progress') {
+      // first half done
+      const half = Math.ceil(createdSubtaskIds.length / 2);
+      for (const stId of createdSubtaskIds.slice(0, half)) {
+        await request(`/api/tasks/${createdId}/subtasks/${stId}`, {
+          method: 'PATCH',
+          headers: authHeaders(creatorAuth.token),
+          body: JSON.stringify({ completed: true })
+        });
+      }
+    }
+
+    // Comments: ~60% of tasks get comments (skip every 5th)
+    if (i % 5 !== 3) {
+      const commentSet = commentTemplates[i % commentTemplates.length];
+      const commentCount = 1 + (i % commentSet.length);
+      const commentAuthIds = [
+        fixtureTask.createdByUserId,
+        fixtureTask.assigneeUserId,
+      ].filter(Boolean);
+
+      for (let c = 0; c < commentCount; c++) {
+        const authorUserId = commentAuthIds[c % commentAuthIds.length];
+        const authorAuth = authByUserId.get(authorUserId);
+        if (!authorAuth) continue;
+
+        await request(`/api/tasks/${createdId}/comments`, {
+          method: 'POST',
+          headers: authHeaders(authorAuth.token),
+          body: JSON.stringify({ content: commentSet[c % commentSet.length] })
+        });
+        commentsSeeded += 1;
+      }
+    }
+  }
+
+  console.log(`Subtasks seeded: ${subtasksSeeded}`);
+  console.log(`Comments seeded: ${commentsSeeded}`);
   console.log('Seed completed successfully.');
 }
 
