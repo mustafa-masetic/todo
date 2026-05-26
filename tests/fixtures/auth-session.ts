@@ -39,33 +39,6 @@ async function fileExists(filePath: string) {
   }
 }
 
-async function ensureAuthenticated(page: import("@playwright/test").Page) {
-  await page.goto("/spaces");
-  await page.waitForLoadState("networkidle");
-
-  const pathname = new URL(page.url()).pathname;
-  if (pathname !== "/spaces") {
-    throw new Error(`Expected an authenticated session, but landed on '${pathname}'.`);
-  }
-}
-
-async function isAuthenticated(page: import("@playwright/test").Page) {
-  try {
-    await ensureAuthenticated(page);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-async function isAlreadyRegisteredErrorVisible(page: import("@playwright/test").Page) {
-  const alreadyRegisteredAlert = page.getByRole("alert").filter({
-    has: page.getByText("Email is already registered.")
-  });
-
-  return alreadyRegisteredAlert.isVisible().catch(() => false);
-}
-
 async function hasReusableStorageState(
   browser: import("@playwright/test").Browser,
   baseURL: string,
@@ -75,12 +48,13 @@ async function hasReusableStorageState(
     return false;
   }
 
-  const context = await browser.newContext({ baseURL, storageState: storageStatePath });
+  const context = await browser.newContext({ baseURL, storageState: storageStatePath, viewport: { width: 1280, height: 720 } });
   const page = await context.newPage();
 
   try {
-    await ensureAuthenticated(page);
-    return true;
+    await page.goto("/spaces");
+    await page.waitForLoadState("networkidle");
+    return new URL(page.url()).pathname === "/spaces";
   } catch {
     return false;
   } finally {
@@ -96,25 +70,24 @@ async function createStorageState(
 ) {
   await mkdir(AUTH_STATE_DIR, { recursive: true });
 
-  const context = await browser.newContext({ baseURL });
+  const context = await browser.newContext({ baseURL, viewport: { width: 1280, height: 720 } });
   const page = await context.newPage();
   const authPage = new AuthPage(page);
 
   try {
     if (authSession.mode === "login") {
-      await authPage.gotoLogin();
-      await authPage.loginExpectSuccess(authSession.email, authSession.password);
+      await authPage.login(authSession.email, authSession.password);
     } else {
-      await authPage.gotoRegister();
-      await authPage.register(authSession, { waitForAuthenticatedUi: false });
-
-      if ((await isAlreadyRegisteredErrorVisible(page)) || !(await isAuthenticated(page))) {
-        await authPage.gotoLogin();
-        await authPage.loginExpectSuccess(authSession.email, authSession.password);
-      }
+      await authPage.register(authSession);
     }
 
-    await ensureAuthenticated(page);
+    await page.goto("/spaces");
+    await page.waitForLoadState("networkidle");
+
+    if (new URL(page.url()).pathname !== "/spaces") {
+      throw new Error(`Auth failed: expected /spaces but got ${page.url()}`);
+    }
+
     await context.storageState({ path: storageStatePath });
   } finally {
     await context.close();
