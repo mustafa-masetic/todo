@@ -148,6 +148,7 @@ export function TaskDetailPage({ taskId, onBack, currentUserId }: TaskDetailPage
     mutationFn: (payload: Parameters<typeof updateTask>[1]) => updateTask(taskId, payload),
     onSuccess: (updated) => {
       qc.setQueryData(["task", taskId], updated);
+      qc.invalidateQueries({ queryKey: ["tasks"] });
       setIsEditing(false);
       notifications.show({ "data-test-id": "task-updated-toast", color: "teal", title: "Task updated", message: "Task details have been saved." });
     },
