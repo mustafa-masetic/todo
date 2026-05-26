@@ -30,6 +30,7 @@ test.describe("Tasks", () => {
     await taskDetail.expectTaskVisible(taskTitle);
 
     await taskDetail.openTaskByTitle(taskTitle);
+    await taskDetail.enterEditMode();
     await taskDetail.setStatus("Done");
     await taskDetail.saveChanges();
     await taskDetail.expectTaskUpdatedToast();
@@ -99,12 +100,14 @@ test.describe("Tasks", () => {
     });
 
     await taskDetail.openTaskByTitle(inProgressTitle);
+    await taskDetail.enterEditMode();
     await taskDetail.setStatus("In Progress");
     await taskDetail.saveChanges();
     await taskDetail.expectTaskUpdatedToast();
     await page.goBack();
 
     await taskDetail.openTaskByTitle(doneTitle);
+    await taskDetail.enterEditMode();
     await taskDetail.setStatus("Done");
     await taskDetail.saveChanges();
     await taskDetail.expectTaskUpdatedToast();

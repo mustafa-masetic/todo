@@ -8,6 +8,7 @@ import {
   FileButton,
   Grid,
   Group,
+  Modal,
   Select,
   Stack,
   Text,
@@ -39,6 +40,7 @@ import {
   deleteAttachment,
   deleteComment,
   deleteSubtask,
+  deleteTodo,
   getAttachmentDownloadUrl,
   getAttachments,
   getComments,
@@ -131,13 +133,23 @@ export function TaskDetailPage({ taskId, onBack, currentUserId }: TaskDetailPage
   const [editDueDate, setEditDueDate] = useState("");
   const [newSubtaskText, setNewSubtaskText] = useState("");
   const [newComment, setNewComment] = useState("");
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+
+  const deleteMutation = useMutation({
+    mutationFn: (t: TaskSearchResult) => deleteTodo(t.spaceId, t.id),
+    onSuccess: () => {
+      notifications.show({ "data-test-id": "task-deleted-toast", color: "teal", title: "Task deleted", message: "The task has been removed." });
+      onBack();
+    },
+    onError: (e: Error) => notifications.show({ message: e.message, color: "red" }),
+  });
 
   const updateMutation = useMutation({
     mutationFn: (payload: Parameters<typeof updateTask>[1]) => updateTask(taskId, payload),
     onSuccess: (updated) => {
       qc.setQueryData(["task", taskId], updated);
       setIsEditing(false);
-      notifications.show({ message: "Task updated", color: "teal" });
+      notifications.show({ "data-test-id": "task-updated-toast", color: "teal", title: "Task updated", message: "Task details have been saved." });
     },
     onError: (e: Error) => notifications.show({ message: e.message, color: "red" }),
   });
@@ -543,6 +555,7 @@ export function TaskDetailPage({ taskId, onBack, currentUserId }: TaskDetailPage
                       leftSection={<IconWriting size={16} />}
                       onClick={handleSave}
                       loading={updateMutation.isPending}
+                      data-testid="task-save-button"
                     >
                       Save Changes
                     </Button>
@@ -557,14 +570,27 @@ export function TaskDetailPage({ taskId, onBack, currentUserId }: TaskDetailPage
                     </Button>
                   </>
                 ) : (
-                  <Button
-                    fullWidth
-                    className="add-button"
-                    leftSection={<IconEdit size={16} />}
-                    onClick={() => startEditing(task)}
-                  >
-                    Edit Task
-                  </Button>
+                  <>
+                    <Button
+                      fullWidth
+                      className="add-button"
+                      leftSection={<IconEdit size={16} />}
+                      onClick={() => startEditing(task)}
+                      data-testid="task-edit-button"
+                    >
+                      Edit Task
+                    </Button>
+                    <Button
+                      fullWidth
+                      variant="light"
+                      color="red"
+                      leftSection={<IconTrash size={16} />}
+                      onClick={() => setDeleteConfirmOpen(true)}
+                      data-testid="task-delete-button"
+                    >
+                      Delete Task
+                    </Button>
+                  </>
                 )}
               </Stack>
             </Card>
@@ -588,6 +614,7 @@ export function TaskDetailPage({ taskId, onBack, currentUserId }: TaskDetailPage
                           { value: "done", label: "Done" },
                         ]}
                         size="sm"
+                        data-testid="task-status-select"
                       />
                     ) : (
                       <Badge
@@ -654,6 +681,30 @@ export function TaskDetailPage({ taskId, onBack, currentUserId }: TaskDetailPage
           </Stack>
         </Grid.Col>
       </Grid>
+
+      <Modal
+        opened={deleteConfirmOpen}
+        onClose={() => setDeleteConfirmOpen(false)}
+        title="Delete task"
+        centered
+      >
+        <Text size="sm" c="var(--app-text)" mb="lg">
+          Are you sure you want to delete <strong>{task.title}</strong>? This cannot be undone.
+        </Text>
+        <Group justify="flex-end" gap="sm">
+          <Button variant="light" color="gray" onClick={() => setDeleteConfirmOpen(false)}>
+            Cancel
+          </Button>
+          <Button
+            color="red"
+            loading={deleteMutation.isPending}
+            onClick={() => deleteMutation.mutate(task)}
+            data-testid="delete-task-confirm-button"
+          >
+            Delete
+          </Button>
+        </Group>
+      </Modal>
     </Stack>
   );
 }

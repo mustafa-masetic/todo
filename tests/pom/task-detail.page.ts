@@ -22,6 +22,10 @@ export class TaskDetailPage {
     await this.page.getByText(title, { exact: true }).first().click();
   }
 
+  async enterEditMode() {
+    await this.page.getByTestId("task-edit-button").click();
+  }
+
   async setStatus(status: "Created" | "In Progress" | "Done") {
     await this.page.getByTestId("task-status-select").click();
     await this.page.getByRole("option", { name: status }).click();
