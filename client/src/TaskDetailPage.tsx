@@ -44,6 +44,7 @@ import {
   getAttachmentDownloadUrl,
   getAttachments,
   getComments,
+  getSpaceMembers,
   getSubtasks,
   getTask,
   updateSubtask,
@@ -131,6 +132,13 @@ export function TaskDetailPage({ taskId, onBack, currentUserId }: TaskDetailPage
   const [editDescription, setEditDescription] = useState("");
   const [editStatus, setEditStatus] = useState<TaskStatus>("created");
   const [editDueDate, setEditDueDate] = useState("");
+  const [editAssigneeId, setEditAssigneeId] = useState<number | null>(null);
+
+  const { data: spaceMembers = [] } = useQuery({
+    queryKey: ["space-members", task?.spaceId],
+    queryFn: () => getSpaceMembers(task!.spaceId),
+    enabled: !!task && isEditing,
+  });
   const [newSubtaskText, setNewSubtaskText] = useState("");
   const [newComment, setNewComment] = useState("");
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -199,6 +207,7 @@ export function TaskDetailPage({ taskId, onBack, currentUserId }: TaskDetailPage
     setEditDescription(t.description);
     setEditStatus(t.status);
     setEditDueDate(t.dueDate ?? "");
+    setEditAssigneeId(t.assigneeUserId ?? null);
     setIsEditing(true);
   }
 
@@ -208,7 +217,7 @@ export function TaskDetailPage({ taskId, onBack, currentUserId }: TaskDetailPage
       notifications.show({ color: "red", title: "Validation failed", message: "Title cannot be empty." });
       return;
     }
-    updateMutation.mutate({ title: cleanTitle, description: editDescription.trim(), status: editStatus, dueDate: editDueDate || null });
+    updateMutation.mutate({ title: cleanTitle, description: editDescription.trim(), status: editStatus, dueDate: editDueDate || null, assigneeUserId: editAssigneeId });
   }
 
   if (isLoading || !task) {
@@ -634,7 +643,23 @@ export function TaskDetailPage({ taskId, onBack, currentUserId }: TaskDetailPage
 
                   <div>
                     <Text size="xs" c="var(--app-subtitle)" mb={6}>Assignee</Text>
-                    {task.assigneeUserId ? (
+                    {isEditing ? (
+                      <Select
+                        className="todo-input"
+                        data-test-id="task-assignee-select"
+                        value={editAssigneeId !== null ? String(editAssigneeId) : null}
+                        onChange={(v) => setEditAssigneeId(v !== null ? Number(v) : null)}
+                        data={[
+                          { value: "", label: "Unassigned" },
+                          ...spaceMembers.map((m) => ({
+                            value: String(m.userId),
+                            label: `${m.firstName} ${m.lastName}`,
+                          })),
+                        ]}
+                        size="sm"
+                        clearable
+                      />
+                    ) : task.assigneeUserId ? (
                       <Group gap="xs">
                         <Avatar size="sm" radius="xl" color="violet" variant="light">
                           {initials(task.assigneeFirstName, task.assigneeLastName)}

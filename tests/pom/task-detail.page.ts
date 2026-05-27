@@ -31,6 +31,11 @@ export class TaskDetailPage {
     await this.page.getByRole("option", { name: status }).click();
   }
 
+  async setAssignee(name: string) {
+    await this.page.getByTestId("task-assignee-select").click();
+    await this.page.getByRole("option", { name, exact: true }).click();
+  }
+
   async saveChanges() {
     await this.page.getByTestId("task-save-button").click();
   }

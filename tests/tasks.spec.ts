@@ -137,4 +137,32 @@ test.describe("Tasks", () => {
     await spacesPage.expectSpaceDeletedToast();
   });
 
+  test("assigns a task to a space member", async ({ page }) => {
+    const unique = randomUUID();
+    await new AuthPage(page).register({ firstName: "Task", lastName: "Assignee", email: `playwright.tasks.assignee.${unique}@example.com`, password: "TestPass123!" });
+
+    const nav = new NavigationComponent(page);
+    const spacesPage = new SpacesPage(page);
+    const taskDetail = new TaskDetailPage(page);
+    const spaceName = `PW Assignee Space ${unique}`;
+    const taskTitle = `PW Assignee Task ${unique}`;
+
+    await ensurePageLoaded(page);
+    await nav.themeToggle().waitFor({ state: "visible" });
+    await nav.goToSpaces();
+    await spacesPage.createSpace(spaceName, "Assignee test space");
+    await spacesPage.openSpaceByName(spaceName);
+
+    await taskDetail.addTask({ title: taskTitle, description: "Task for assignee test" });
+    await taskDetail.expectTaskVisible(taskTitle);
+
+    await taskDetail.openTaskByTitle(taskTitle);
+    await taskDetail.enterEditMode();
+    await taskDetail.setAssignee("Task Assignee");
+    await taskDetail.saveChanges();
+    await taskDetail.expectTaskUpdatedToast();
+
+    await expect(page.getByText("Task Assignee")).toBeVisible();
+  });
+
 });
