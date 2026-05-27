@@ -647,17 +647,16 @@ export function TaskDetailPage({ taskId, onBack, currentUserId }: TaskDetailPage
                       <Select
                         className="todo-input"
                         data-test-id="task-assignee-select"
-                        value={editAssigneeId !== null ? String(editAssigneeId) : null}
-                        onChange={(v) => setEditAssigneeId(v !== null ? Number(v) : null)}
+                        value={editAssigneeId !== null ? String(editAssigneeId) : "unassigned"}
+                        onChange={(v) => setEditAssigneeId(v && v !== "unassigned" ? Number(v) : null)}
                         data={[
-                          { value: "", label: "Unassigned" },
+                          { value: "unassigned", label: "Unassigned" },
                           ...spaceMembers.map((m) => ({
                             value: String(m.userId),
                             label: `${m.firstName} ${m.lastName}`,
                           })),
                         ]}
                         size="sm"
-                        clearable
                       />
                     ) : task.assigneeUserId ? (
                       <Group gap="xs">
